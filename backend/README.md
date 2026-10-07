@@ -28,6 +28,7 @@ app/
   errors.py          AppError hierarchy and handlers producing {"error": {"code", "message"}}
   logging_config.py  JSON (production) / console (development) logging with secret redaction
   api/               routers, dependencies and response schemas
+  llm/               model registry (tiers), structured calls with escalation, routing heuristics
   db/                SQLAlchemy models, async engine, Alembic migrations
 tests/
 ```
@@ -41,6 +42,23 @@ tests/
 | `GET /api/docs` | Swagger UI; the OpenAPI schema is at `/api/openapi.json` |
 
 Every response carries an `X-Request-ID` header, generated or propagated from the request.
+
+## LLM layer (`app/llm/`)
+
+- **Tiers.** `LLM_LIGHT` and `LLM_HEAVY` are `provider:model` strings (`openai`, `anthropic`,
+  `google_genai`), each with an optional `*_FALLBACK`. Both are required: `create_app()` validates
+  them and the provider keys, and refuses to start with a message listing every problem.
+- **Keys are passed explicitly** from `Settings` to each model (`api_key=`); nothing is read from
+  `os.environ`, so values that only live in `.env` work.
+- **`structured_call(registry, tier, Schema, messages)`** returns a validated `Schema` instance plus
+  the tier and model actually used:
+  - provider error (after the SDK's retries) → the tier's fallback model, else `LLMUnavailableError` (503);
+  - output not matching the schema on `light` → retried once on `heavy` (recorded as an escalation);
+    on `heavy` → `LLMInvalidOutputError` (502).
+  - The tier and escalation are added to the run metadata and tags, so they appear in LangSmith.
+- **Routing heuristics** (`routing.assess_complexity`) classify a description as `simple`,
+  `complex` or `uncertain` from its length and contrast markers (EN/PL). `TIER_POLICY` maps
+  complexity to the tiers of both agents; `uncertain` cases go to a light-model classifier (step 4).
 
 ## Database and migrations
 

@@ -19,6 +19,7 @@ from app.config import Settings, get_settings
 from app.db.migrate import upgrade_to_head_async
 from app.db.session import create_engine, create_session_factory
 from app.errors import register_error_handlers
+from app.llm.models import ModelRegistry
 from app.logging_config import configure_logging
 
 logger = logging.getLogger(__name__)
@@ -86,6 +87,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         openapi_url=f"{API_PREFIX}/openapi.json",
     )
     app.state.settings = settings
+    # Validates the LLM configuration; a bad .env stops the app here with a clear message.
+    app.state.models = ModelRegistry(settings)
 
     if settings.is_development:
         # In production the SPA is served by nginx on the same origin, so CORS is not needed.

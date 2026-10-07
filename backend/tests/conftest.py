@@ -26,9 +26,22 @@ def make_settings(tmp_path: Path, **overrides: Any) -> Settings:
     return Settings(_env_file=None, **values)
 
 
+# The smallest configuration the application starts with (see ModelRegistry validation).
+MINIMAL_APP_CONFIG: dict[str, Any] = {
+    "llm_light": "openai:test-light-model",
+    "llm_heavy": "openai:test-heavy-model",
+    "openai_api_key": "test-openai-key",
+}
+
+
+def make_app_settings(tmp_path: Path, **overrides: Any) -> Settings:
+    """Like make_settings(), plus the minimal configuration needed by create_app()."""
+    return make_settings(tmp_path, **{**MINIMAL_APP_CONFIG, **overrides})
+
+
 @pytest.fixture
 def settings(tmp_path: Path) -> Settings:
-    return make_settings(tmp_path)
+    return make_app_settings(tmp_path)
 
 
 @pytest.fixture

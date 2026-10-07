@@ -39,6 +39,12 @@ Rules:
 | [ADR-01](step-01-backend-foundation.md) | Backend foundation: config, logging, errors, health/meta, SQLite + Alembic | Accepted (amended by ADR-01.2) |
 | [ADR-01.2](step-01.2-langsmith-workspace-id.md) | LangSmith workspace id for organization-scoped service keys | Accepted |
 
+### Step 2 — LLM layer and routing
+
+| ADR | Title | Status |
+|-----|-------|--------|
+| [ADR-02](step-02-llm-layer-and-routing.md) | Model registry, structured calls with escalation, routing heuristics | Accepted |
+
 ## Templates
 
 Step ADR:

@@ -10,7 +10,7 @@ from app import __version__
 from app.api.deps import get_session
 from app.config import Settings
 from app.main import create_app
-from tests.conftest import make_settings
+from tests.conftest import make_app_settings
 
 
 def test_health_ok(client: TestClient) -> None:
@@ -61,19 +61,19 @@ def test_request_id_is_generated_or_propagated(client: TestClient) -> None:
     assert propagated.headers["X-Request-ID"] == "abc-123"
 
 
-def test_meta_with_nothing_configured(client: TestClient) -> None:
+def test_meta_with_minimal_configuration(client: TestClient) -> None:
     body = client.get("/api/meta").json()
 
     assert body == {
         "app": {"name": "song-recommender", "version": __version__, "environment": "development"},
         "llm": {
-            "light": None,
-            "heavy": None,
+            "light": "openai:test-light-model",
+            "heavy": "openai:test-heavy-model",
             "light_fallback": None,
             "heavy_fallback": None,
             "heavy_reasoning": False,
         },
-        "stt": {"enabled": False, "provider": "openai"},
+        "stt": {"enabled": True, "provider": "openai"},
         "catalogs": {"spotify": False, "youtube": False},
         "langsmith": {"enabled": False, "project": None},
         "locales": ["en", "pl"],
@@ -87,7 +87,7 @@ def test_meta_reports_configuration_without_leaking_secrets(tmp_path: Path) -> N
         "youtube_api_key": "test-youtube-key-0123456789",
         "langsmith_api_key": "test-langsmith-key-0123456789",
     }
-    settings = make_settings(
+    settings = make_app_settings(
         tmp_path,
         llm_light="openai:light-model",
         llm_heavy="openai:heavy-model",
@@ -118,8 +118,8 @@ def test_cors_only_in_development(tmp_path: Path) -> None:
         "Origin": "http://localhost:5173",
         "Access-Control-Request-Method": "GET",
     }
-    dev = TestClient(create_app(make_settings(tmp_path, app_env="development")))
-    prod = TestClient(create_app(make_settings(tmp_path, app_env="production")))
+    dev = TestClient(create_app(make_app_settings(tmp_path, app_env="development")))
+    prod = TestClient(create_app(make_app_settings(tmp_path, app_env="production")))
 
     dev_response = dev.options("/api/meta", headers=preflight)
     prod_response = prod.options("/api/meta", headers=preflight)

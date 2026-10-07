@@ -92,5 +92,7 @@ def test_env_example_is_a_valid_configuration() -> None:
 
     assert settings.llm_heavy_reasoning is False
     assert settings.langsmith_tracing is True
+    assert settings.llm_light == "openai:gpt-6-luna"
+    assert settings.llm_heavy == "openai:gpt-6.1-sol"
     assert settings.openai_api_key is None  # empty placeholders are treated as unset
     assert settings.cors_origins == ["http://localhost:5173"]

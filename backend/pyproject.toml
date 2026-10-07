@@ -8,6 +8,11 @@ dependencies = [
     "aiosqlite>=0.22.1",
     "alembic>=1.20.0",
     "fastapi>=0.142.2",
+    "langchain>=1.4.3",
+    "langchain-anthropic>=1.7.5",
+    "langchain-core>=1.6.7",
+    "langchain-google-genai>=4.4.0",
+    "langchain-openai>=1.6.7",
     "pydantic-settings>=2.15.0",
     "sqlalchemy[asyncio]>=2.1.3",
     "uvicorn[standard]>=0.54.0",
@@ -21,6 +26,10 @@ testpaths = ["tests"]
 pythonpath = ["."]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
+filterwarnings = [
+    # Third-party code on Python 3.14; not actionable here (google-genai uses a deprecated alias).
+    "ignore:'_UnionGenericAlias' is deprecated:DeprecationWarning:google.genai.types",
+]
 
 [tool.ruff]
 target-version = "py314"

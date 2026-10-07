@@ -48,6 +48,9 @@ class Settings(BaseSettings):
     llm_light_fallback: str | None = None
     llm_heavy_fallback: str | None = None
     llm_heavy_reasoning: bool = False
+    # Per request to the provider; the provider SDK retries transient errors this many times.
+    llm_timeout_seconds: float = Field(default=60.0, gt=0)
+    llm_max_retries: int = Field(default=2, ge=0)
 
     # --- Speech-to-text ---
     stt_provider: SttProvider = "openai"

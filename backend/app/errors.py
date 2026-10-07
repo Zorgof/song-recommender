@@ -12,6 +12,10 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 logger = logging.getLogger(__name__)
 
 
+class ConfigurationError(Exception):
+    """Invalid configuration detected at startup; the application must not start."""
+
+
 class AppError(Exception):
     """Base class for errors that are shown to the client with a stable `code`."""
 
@@ -34,6 +38,12 @@ class LLMUnavailableError(AppError):
     code = "llm_unavailable"
     status_code = status.HTTP_503_SERVICE_UNAVAILABLE
     default_message = "The language model provider is unavailable."
+
+
+class LLMInvalidOutputError(AppError):
+    code = "llm_invalid_output"
+    status_code = status.HTTP_502_BAD_GATEWAY
+    default_message = "The language model returned an invalid response."
 
 
 class CatalogUnavailableError(AppError):
