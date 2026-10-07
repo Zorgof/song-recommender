@@ -8,7 +8,7 @@ Status: **approved draft** · Last updated: 2026-10-07 · Requirements: [require
 
 | Area | Choice | Why |
 |------|--------|-----|
-| Backend | Python 3.13, FastAPI, Pydantic v2, pydantic-settings, `uv` | Required stack; fast, typed, simple config. |
+| Backend | Python 3.14.8, FastAPI, Pydantic v2, pydantic-settings, `uv` | Required stack; fast, typed, simple config. |
 | Agent orchestration | **LangGraph** | Explicit multi-agent graph; `interrupt()` for the clarifying question; native LangSmith tracing. |
 | Model abstraction | LangChain `init_chat_model` + `langchain-openai` (default), `langchain-anthropic`, `langchain-google-genai` | One `provider:model` string per tier; `with_structured_output`; `with_fallbacks`. |
 | Observability | LangSmith (`langsmith` SDK), US region | Traces, metadata, threads, feedback, datasets and evals. |
@@ -17,7 +17,7 @@ Status: **approved draft** · Last updated: 2026-10-07 · Requirements: [require
 | STT | OpenAI transcription API (`openai` SDK) behind an `STTProvider` interface | Uses the existing OpenAI key; no extra container. |
 | Frontend | React 19, TypeScript, Vite, TanStack Query, React Router, Tailwind CSS, **react-i18next** | Required stack; PL/EN localization. |
 | Testing | pytest, pytest-asyncio, respx, LangChain fake chat models; Vitest + React Testing Library | Offline, deterministic tests. |
-| Quality | ruff, mypy; ESLint, Prettier | |
+| Quality | ruff, mypy; oxlint, Prettier | oxlint is the Vite template default (see ADR-00). |
 | Runtime | Docker Compose: `frontend` (nginx) and `backend` | One command to run it locally. |
 
 Exact model IDs are configuration, not code. The current OpenAI model IDs for the light tier, the heavy tier and transcription are checked against the OpenAI docs when steps 2 and 6 are implemented. They are then written into `.env.example`.
@@ -209,11 +209,11 @@ song-recommender/
 
 ## 3. Implementation steps
 
-Each step ends in a reviewable state. The developer reviews and commits after each step.
+Each step ends in a reviewable state. After each step N a step ADR `ADR-NN` (`docs/adr/step-NN-<slug>.md`) is added, describing what was actually implemented and the issues met; then the developer reviews and commits. Additional decisions within a step are numbered `ADR-NN.M` (see `docs/adr/README.md`).
 
 ### Step 0 — Scaffolding
 - Monorepo layout as in 2.9. `uv init` for the backend, `npm create vite` (React + TS) for the frontend.
-- ruff, mypy, ESLint and Prettier configs. Update `.gitignore` (`data/`, `node_modules/`, `.env`).
+- ruff, mypy, oxlint and Prettier configs. Update `.gitignore` (`data/`, `node_modules/`, `.env`).
 - `.env.example` with every variable and a comment for each. A first `README.md` stub.
 - **Done when:** `uv run pytest` and `npm run build` succeed on empty projects.
 
@@ -265,7 +265,7 @@ Each step ends in a reviewable state. The developer reviews and commits after ea
 - **Done when:** voice → transcript → edit → recommendation works in Chrome and Firefox on `localhost`.
 
 ### Step 9 — Docker
-- Multi-stage Dockerfiles (backend: `python:3.13-slim` + uv, non-root; frontend: Node LTS build → `nginx:alpine`).
+- Multi-stage Dockerfiles (backend: `python:3.14.8-slim` + uv, non-root; frontend: Node LTS build → `nginx:alpine`).
 - `docker-compose.yml`: `backend` and `frontend`, healthchecks, `depends_on: condition: service_healthy`, the `./data` volume.
 - `docker-compose.dev.yml` with bind mounts and hot reload.
 - **Done when:** `cp .env.example .env` and filling in the keys, then `docker compose up --build`, gives a working app at `http://localhost:8080`, and data survives a restart.
