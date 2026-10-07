@@ -36,8 +36,8 @@ Rules:
 
 | ADR | Title | Status |
 |-----|-------|--------|
-| [ADR-01](step-01-backend-foundation.md) | Backend foundation: config, logging, errors, health/meta, SQLite + Alembic | Accepted (amended by ADR-01.1) |
-| [ADR-01.1](step-01.1-secret-scanner-safe-test-fixtures.md) | Secret-scanner-safe test fixtures | Accepted |
+| [ADR-01](step-01-backend-foundation.md) | Backend foundation: config, logging, errors, health/meta, SQLite + Alembic | Accepted (amended by ADR-01.2) |
+| [ADR-01.2](step-01.2-langsmith-workspace-id.md) | LangSmith workspace id for organization-scoped service keys | Accepted |
 
 ## Templates
 

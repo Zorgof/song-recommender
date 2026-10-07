@@ -15,6 +15,7 @@ def test_defaults(tmp_path: Path) -> None:
     assert settings.stt_provider == "openai"
     assert settings.spotify_market == "PL"
     assert settings.langsmith_endpoint == "https://api.smith.langchain.com"
+    assert settings.langsmith_workspace_id is None
     assert settings.database_url == f"sqlite+aiosqlite:///{tmp_path / 'data' / 'app.db'}"
 
 

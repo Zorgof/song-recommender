@@ -1,6 +1,6 @@
 # ADR-01: Step 1 — Backend foundation
 
-- Status: Accepted — test fixtures amended by [ADR-01.1](step-01.1-secret-scanner-safe-test-fixtures.md)
+- Status: Accepted — amended by [ADR-01.2](step-01.2-langsmith-workspace-id.md)
 - Date: 2026-10-07
 - Step: 1
 

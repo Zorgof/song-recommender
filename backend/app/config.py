@@ -64,6 +64,9 @@ class Settings(BaseSettings):
     # --- LangSmith ---
     langsmith_tracing: bool = False
     langsmith_api_key: SecretStr | None = None
+    # Required when the key is an organization-scoped service key (`lsv2_sk_…`): such keys must
+    # name the workspace on every request. Optional for personal access tokens.
+    langsmith_workspace_id: str | None = None
     langsmith_project: str = "song-recommender"
     langsmith_endpoint: str = "https://api.smith.langchain.com"
 
