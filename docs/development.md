@@ -42,6 +42,9 @@ uv run ruff check .     # lint
 uv run ruff format .    # format
 uv run mypy             # strict type check
 
+# run the API (http://localhost:8000/api/docs); migrations run on startup
+uv run uvicorn app.main:create_app --factory --reload
+
 # frontend
 cd frontend
 npm install
@@ -112,8 +115,9 @@ ones) but are not used here: line length is enforced by the formatters (ruff: 10
 | Tool | Scope | Configuration |
 |------|-------|---------------|
 | ruff (lint + format) | Python | `[tool.ruff]` in `backend/pyproject.toml`: line length 100, rule sets E, W, F, I, B, UP, SIM, ASYNC, RUF |
-| mypy (strict) | Python | `[tool.mypy]` in `backend/pyproject.toml` |
+| mypy (strict, pydantic plugin) | Python | `[tool.mypy]` and `[tool.pydantic-mypy]` in `backend/pyproject.toml` |
 | pytest + pytest-asyncio | Python tests | `[tool.pytest.ini_options]` in `backend/pyproject.toml` |
+| Alembic | Database migrations | `backend/alembic.ini`, `backend/app/db/migrations/`; workflow in [backend/README.md](../backend/README.md#database-and-migrations) |
 | oxlint | TypeScript / React | `frontend/.oxlintrc.json` |
 | Prettier | TypeScript, CSS, JSON, Markdown, HTML in `frontend/` | `frontend/.prettierrc.json`, `frontend/.prettierignore` |
 | TypeScript compiler | type checking | `frontend/tsconfig*.json` |

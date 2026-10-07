@@ -7,7 +7,7 @@ system recommends **one song** that fits, with a Spotify player embedded in the 
 YouTube link and a short explanation. Every decision is traced in LangSmith so the selection
 logic can be inspected and tuned.
 
-> **Status:** early development — step 0 (scaffolding) of the
+> **Status:** early development — step 1 (backend foundation) of the
 > [implementation plan](docs/implementation-plan.md). Nothing is runnable end to end yet.
 
 ## Documentation

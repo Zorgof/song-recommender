@@ -32,6 +32,13 @@ Rules:
 | [ADR-00](step-00-scaffolding.md) | Repository scaffolding | Accepted (amended by ADR-00.1) |
 | [ADR-00.1](step-00.1-python-3-14-and-dev-environment.md) | Python 3.14.8 and development environment setup | Accepted |
 
+### Step 1 — Backend foundation
+
+| ADR | Title | Status |
+|-----|-------|--------|
+| [ADR-01](step-01-backend-foundation.md) | Backend foundation: config, logging, errors, health/meta, SQLite + Alembic | Accepted (amended by ADR-01.1) |
+| [ADR-01.1](step-01.1-secret-scanner-safe-test-fixtures.md) | Secret-scanner-safe test fixtures | Accepted |
+
 ## Templates
 
 Step ADR:
