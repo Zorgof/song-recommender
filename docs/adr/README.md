@@ -49,7 +49,15 @@ Rules:
 
 | ADR | Title | Status |
 |-----|-------|--------|
-| [ADR-03](step-03-music-catalog-clients.md) | Spotify and YouTube clients, fuzzy matching, track link cache | Accepted |
+| [ADR-03](step-03-music-catalog-clients.md) | Spotify and YouTube clients, fuzzy matching, track link cache | Accepted (amended by ADR-03.1) |
+| [ADR-03.1](step-03.1-prefer-artists-own-recording.md) | Prefer the artist's own recording when matches tie | Accepted |
+
+### Step 4 — Agent graph
+
+| ADR | Title | Status |
+|-----|-------|--------|
+| [ADR-04](step-04-agent-graph.md) | LangGraph agents, clarification interrupt, persistence, LangSmith root runs | Accepted (amended by ADR-04.1) |
+| [ADR-04.1](step-04.1-three-candidates.md) | Three curator candidates per attempt instead of five | Accepted |
 
 ## Templates
 

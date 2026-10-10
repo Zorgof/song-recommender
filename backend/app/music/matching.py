@@ -119,6 +119,9 @@ def artist_score(wanted: str, found: Sequence[str]) -> float:
 class MatchScore:
     title: float
     artist: float
+    # Tie-breakers between matches. The wanted artist against *all* credited artists: prefers
+    # Brian Eno's own recording over one credited to "Brian Eno, Tyler Rix, Tolga Kashif".
+    exact_artist: float
     # Title similarity before variant markers are removed; prefers "Hurt" over "Hurt - Live".
     exact_title: float
 
@@ -131,6 +134,9 @@ def score(wanted_title: str, wanted_artist: str, title: str, artists: Sequence[s
     return MatchScore(
         title=title_score(wanted_title, title),
         artist=artist_score(wanted_artist, artists),
+        exact_artist=fuzz.token_sort_ratio(
+            normalize_artist(wanted_artist), normalize_artist(" ".join(artists))
+        ),
         exact_title=fuzz.ratio(_fold(wanted_title), _fold(title)),
     )
 
@@ -160,6 +166,7 @@ def rank[T](
         key=lambda r: (
             r.score.is_match,
             min(r.score.title, r.score.artist),
+            r.score.exact_artist,
             r.score.exact_title,
         ),
         reverse=True,

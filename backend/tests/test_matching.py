@@ -146,6 +146,20 @@ def test_rank_prefers_matches_then_the_plain_version_then_catalog_order() -> Non
     assert ranked[2].item is tracks[1]
 
 
+def test_rank_prefers_the_artists_own_recording_over_a_collaboration() -> None:
+    # Live finding: Spotify listed a collaboration first, and its title has no "Remastered".
+    tracks = [
+        ("An Ending (Ascent)", ("Brian Eno", "Tyler Rix", "Tolga Kashif")),
+        ("An Ending (Ascent) - Remastered 2005", ("Brian Eno",)),
+        ('An Ending (Ascent) - From "For All Mankind"', ("Brian Eno",)),
+    ]
+
+    ranked = rank("An Ending (Ascent)", "Brian Eno", tracks, lambda t: t[0], lambda t: t[1])
+
+    assert all(r.score.is_match for r in ranked)
+    assert [r.item for r in ranked] == [tracks[1], tracks[2], tracks[0]]
+
+
 CASH = ("Hurt", "Johnny Cash")
 PODSIADLO = ("Małomiasteczkowy", "Dawid Podsiadło")
 

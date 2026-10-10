@@ -1,6 +1,6 @@
 # ADR-03: Step 3 — Music catalog clients
 
-- Status: Accepted
+- Status: Accepted (amended by [ADR-03.1](step-03.1-prefer-artists-own-recording.md))
 - Date: 2026-10-10
 - Step: 3
 

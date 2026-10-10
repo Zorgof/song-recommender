@@ -85,6 +85,11 @@ class Settings(BaseSettings):
         return self.data_dir / "app.db"
 
     @property
+    def checkpoints_path(self) -> Path:
+        """LangGraph checkpoints (graph state of paused and finished runs)."""
+        return self.data_dir / "checkpoints.db"
+
+    @property
     def database_url(self) -> str:
         return f"sqlite+aiosqlite:///{self.database_path}"
 

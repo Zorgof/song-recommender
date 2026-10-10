@@ -61,7 +61,7 @@ flowchart TD
 | `route_request` | Heuristics + LLM | light | `RoutingDecision{complexity, need_analyst_tier, curator_tier, reasons}`. Heuristics (length, contradiction markers, transcript) can skip the LLM call when the result is obvious. |
 | `need_analyst` (Agent 1) | LLM, structured output | from routing | `NeedProfile` (below) |
 | `ask_clarification` | `interrupt()` | — | Pauses the graph; the API returns the question (in the UI locale). Runs at most once. |
-| `music_curator` (Agent 2) | LLM, structured output | from routing; **heavy on retry** | 5 ranked `SongCandidate`s and a user-facing explanation for each, in the UI locale. The prompt includes excluded tracks and the candidates rejected so far. |
+| `music_curator` (Agent 2) | LLM, structured output | from routing; **heavy on retry** | 3 ranked `SongCandidate`s (5 before ADR-04.1) and a user-facing explanation for each, in the UI locale. The prompt includes excluded tracks and the candidates rejected so far. |
 | `verify_candidates` | Deterministic tool | — | Spotify search for each candidate, with fuzzy matching (title and artist ≥ 85) and the exclusion filter. Produces `verified[]` and `rejected[]` with reasons. |
 | `finalize` | Deterministic tool | — | Picks the highest-ranked verified candidate and runs the YouTube lookup (cache first). If something is not verified, uses search URLs flagged `verified=false`. Persists the result. |
 

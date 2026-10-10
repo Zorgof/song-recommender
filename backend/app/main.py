@@ -8,22 +8,29 @@ import logging
 import time
 import uuid
 from collections.abc import AsyncIterator, Awaitable, Callable
-from contextlib import asynccontextmanager
+from contextlib import AsyncExitStack, asynccontextmanager
 
 import httpx
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 
 from app import __version__
+from app.agents.graph import build_graph
+from app.agents.prompt_loader import PromptLibrary
+from app.agents.runner import RecommendationRunner
+from app.agents.state import AgentDeps
 from app.api import system
 from app.config import Settings, get_settings
 from app.db.migrate import upgrade_to_head_async
+from app.db.repositories import RecommendationRepository
 from app.db.session import create_engine, create_session_factory
 from app.errors import register_error_handlers
 from app.llm.models import ModelRegistry
 from app.logging_config import configure_logging
 from app.music.cache import TrackLinkCacheRepository
 from app.music.service import build_music_catalog
+from app.observability.tracing import Tracing
 
 logger = logging.getLogger(__name__)
 
@@ -37,25 +44,46 @@ _QUIET_PATHS = frozenset({f"{API_PREFIX}/health"})
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings: Settings = app.state.settings
     await upgrade_to_head_async(settings.database_path)
-    engine = create_engine(settings.database_url)
-    app.state.engine = engine
-    session_factory = create_session_factory(engine)
-    app.state.session_factory = session_factory
-    # One connection pool for all catalog requests (Spotify, YouTube).
-    http = httpx.AsyncClient(timeout=settings.catalog_timeout_seconds)
-    app.state.catalog = build_music_catalog(
-        settings, http, TrackLinkCacheRepository(session_factory)
-    )
-    logger.info(
-        "Application started",
-        extra={"environment": settings.app_env, "database": str(settings.database_path)},
-    )
-    try:
+    async with AsyncExitStack() as stack:
+        engine = create_engine(settings.database_url)
+        stack.push_async_callback(engine.dispose)
+        session_factory = create_session_factory(engine)
+        app.state.engine = engine
+        app.state.session_factory = session_factory
+
+        # One connection pool for all catalog requests (Spotify, YouTube).
+        http = await stack.enter_async_context(
+            httpx.AsyncClient(timeout=settings.catalog_timeout_seconds)
+        )
+        catalog = build_music_catalog(settings, http, TrackLinkCacheRepository(session_factory))
+        app.state.catalog = catalog
+
+        checkpointer = await stack.enter_async_context(
+            AsyncSqliteSaver.from_conn_string(str(settings.checkpoints_path))
+        )
+        tracing = Tracing.from_settings(settings)
+        stack.push_async_callback(tracing.flush)
+        app.state.recommender = RecommendationRunner(
+            build_graph(checkpointer),
+            AgentDeps(
+                models=app.state.models,
+                catalog=catalog,
+                prompts=app.state.prompts,
+                repository=RecommendationRepository(session_factory),
+            ),
+            tracing,
+            history_exclude_last_n=settings.history_exclude_last_n,
+        )
+        logger.info(
+            "Application started",
+            extra={
+                "environment": settings.app_env,
+                "database": str(settings.database_path),
+                "langsmith": tracing.enabled,
+            },
+        )
         yield
-    finally:
-        await http.aclose()
-        await engine.dispose()
-        logger.info("Application stopped")
+    logger.info("Application stopped")
 
 
 async def _log_requests(
@@ -99,6 +127,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.settings = settings
     # Validates the LLM configuration; a bad .env stops the app here with a clear message.
     app.state.models = ModelRegistry(settings)
+    # Missing or malformed prompt files also stop the app at startup.
+    app.state.prompts = PromptLibrary.load()
 
     if settings.is_development:
         # In production the SPA is served by nginx on the same origin, so CORS is not needed.

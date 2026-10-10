@@ -34,6 +34,15 @@ class NotFoundError(AppError):
     default_message = "The requested resource was not found."
 
 
+class ConflictError(AppError):
+    """The request does not fit the current state of the resource (e.g. answering a
+    clarifying question that was not asked)."""
+
+    code = "conflict"
+    status_code = status.HTTP_409_CONFLICT
+    default_message = "The request conflicts with the current state of the resource."
+
+
 class LLMUnavailableError(AppError):
     code = "llm_unavailable"
     status_code = status.HTTP_503_SERVICE_UNAVAILABLE

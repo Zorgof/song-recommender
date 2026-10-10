@@ -30,6 +30,8 @@ app/
   api/               routers, dependencies and response schemas
   llm/               model registry (tiers), structured calls with escalation, routing heuristics
   music/             Spotify and YouTube clients, fuzzy matching, track link cache
+  agents/            LangGraph graph, nodes, schemas, versioned prompts, RecommendationRunner
+  observability/     LangSmith client, root runs, trace URLs
   db/                SQLAlchemy models, async engine, Alembic migrations
 tests/
 ```
@@ -81,6 +83,32 @@ Every response carries an `X-Request-ID` header, generated or propagated from th
   punctuation, "Remastered"/"Live"/"feat." markers, a leading "The") and compared with rapidfuzz;
   both the title and the artist must score at least 85. `normalized_key(artist, title)` is the
   cache key (`"artist|title"`).
+
+## Agent graph (`app/agents/`)
+
+`app.state.recommender` (`RecommendationRunner`) runs one request:
+`start(text, input_mode=…, locale=…)` returns `Completed(recommendation)` or
+`NeedsClarification(request_id, question)`; `answer(request_id, answer)` resumes a paused run.
+
+```
+route_request → need_analyst → [ask_clarification → need_analyst]
+             → music_curator → verify_candidates → [music_curator, up to 3 attempts] → finalize
+```
+
+- **Routing:** heuristics, then a light-model classifier only for uncertain cases.
+- **Clarification:** at most one question, via LangGraph `interrupt()`. The paused state lives in
+  `DATA_DIR/checkpoints.db`, so it survives a restart.
+- **Escalation:** invalid structured output → heavy (ADR-02); no verified candidate → the next
+  curator attempt runs on heavy, with the rejected candidates as feedback.
+- **Verification:** concurrent Spotify lookups. Songs from the last `HISTORY_EXCLUDE_LAST_N`
+  recommendations are excluded. Without a verified song, unverified search links are returned.
+- **Prompts:** `app/agents/prompts/<name>.v<N>.md`, with a `<!-- system -->` and a
+  `<!-- user -->` section and `{{placeholders}}`. The highest version is used and recorded on
+  every trace. To change a prompt, add a new version file.
+- **LangSmith:** with `LANGSMITH_TRACING=true` and a key, every run is a root run
+  `recommend_song` (`run_id` = request id; the resumed run gets a derived id in the same
+  thread). It carries the verbatim input, models, prompt versions, routing, escalations and
+  tags, and LLM, node and catalog runs nest under it.
 
 ## Database and migrations
 

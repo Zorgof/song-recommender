@@ -8,6 +8,8 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from app.agents.runner import RecommendationRunner
+from app.config import Settings
 from app.errors import CatalogUnavailableError
 from app.main import create_app
 from app.music.cache import TrackLinkCacheRepository
@@ -299,3 +301,10 @@ def test_app_starts_with_catalogs_configured(tmp_path: Path) -> None:
 
     with TestClient(app) as client:
         assert client.get("/api/meta").json()["catalogs"] == {"spotify": True, "youtube": False}
+
+
+def test_app_exposes_the_recommendation_runner(app: FastAPI, settings: Settings) -> None:
+    with TestClient(app):
+        assert isinstance(app.state.recommender, RecommendationRunner)
+        assert app.state.recommender._tracing.enabled is False
+    assert settings.checkpoints_path.parent == settings.data_dir
