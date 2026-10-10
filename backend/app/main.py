@@ -10,6 +10,7 @@ import uuid
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 
+import httpx
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -21,6 +22,8 @@ from app.db.session import create_engine, create_session_factory
 from app.errors import register_error_handlers
 from app.llm.models import ModelRegistry
 from app.logging_config import configure_logging
+from app.music.cache import TrackLinkCacheRepository
+from app.music.service import build_music_catalog
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +39,13 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     await upgrade_to_head_async(settings.database_path)
     engine = create_engine(settings.database_url)
     app.state.engine = engine
-    app.state.session_factory = create_session_factory(engine)
+    session_factory = create_session_factory(engine)
+    app.state.session_factory = session_factory
+    # One connection pool for all catalog requests (Spotify, YouTube).
+    http = httpx.AsyncClient(timeout=settings.catalog_timeout_seconds)
+    app.state.catalog = build_music_catalog(
+        settings, http, TrackLinkCacheRepository(session_factory)
+    )
     logger.info(
         "Application started",
         extra={"environment": settings.app_env, "database": str(settings.database_path)},
@@ -44,6 +53,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     try:
         yield
     finally:
+        await http.aclose()
         await engine.dispose()
         logger.info("Application stopped")
 

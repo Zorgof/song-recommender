@@ -64,6 +64,9 @@ class Settings(BaseSettings):
     # --- YouTube ---
     youtube_api_key: SecretStr | None = None
 
+    # Timeout of one request to Spotify or YouTube.
+    catalog_timeout_seconds: float = Field(default=10.0, gt=0)
+
     # --- LangSmith ---
     langsmith_tracing: bool = False
     langsmith_api_key: SecretStr | None = None

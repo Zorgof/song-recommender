@@ -29,6 +29,7 @@ app/
   logging_config.py  JSON (production) / console (development) logging with secret redaction
   api/               routers, dependencies and response schemas
   llm/               model registry (tiers), structured calls with escalation, routing heuristics
+  music/             Spotify and YouTube clients, fuzzy matching, track link cache
   db/                SQLAlchemy models, async engine, Alembic migrations
 tests/
 ```
@@ -59,6 +60,27 @@ Every response carries an `X-Request-ID` header, generated or propagated from th
 - **Routing heuristics** (`routing.assess_complexity`) classify a description as `simple`,
   `complex` or `uncertain` from its length and contrast markers (EN/PL). `TIER_POLICY` maps
   complexity to the tiers of both agents; `uncertain` cases go to a light-model classifier (step 4).
+
+## Music catalogs (`app/music/`)
+
+- **`MusicCatalog`** (`app.state.catalog`) is what the agent graph uses; it reads the
+  `track_link_cache` table first and calls the APIs only on a miss. Found results are cached for
+  30 days, "not found" for 1 day; errors are never cached.
+  - `lookup_spotify(title, artist)` verifies a curator candidate: the matching track, or `None`
+    plus the closest track. An unreachable or unconfigured Spotify raises
+    `CatalogUnavailableError` (503, `catalog_unavailable`).
+  - `youtube_link(title, artist)` always returns a URL: the video, or a YouTube search URL marked
+    unverified (quota used up, API error, not configured, nothing found).
+- **`SpotifyClient`**: Client Credentials token, cached and refreshed 60 s before it expires or
+  when Spotify rejects it (HTTP 401, one retry). Search in `SPOTIFY_MARKET`, at most 10 results
+  (Development Mode limit): first with `track:`/`artist:` filters, then as free text.
+- **`YouTubeClient`**: `search.list` with `type=video`, `videoCategoryId=10` (Music). The API key
+  is sent in the `X-Goog-Api-Key` header, never in the URL. After a `quotaExceeded` error no call
+  is made until the quota resets (midnight Pacific time).
+- **Matching** (`matching.py`): titles and artists are normalized (case, accents incl. `ł`,
+  punctuation, "Remastered"/"Live"/"feat." markers, a leading "The") and compared with rapidfuzz;
+  both the title and the artist must score at least 85. `normalized_key(artist, title)` is the
+  cache key (`"artist|title"`).
 
 ## Database and migrations
 

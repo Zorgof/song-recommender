@@ -45,6 +45,12 @@ Rules:
 |-----|-------|--------|
 | [ADR-02](step-02-llm-layer-and-routing.md) | Model registry, structured calls with escalation, routing heuristics | Accepted |
 
+### Step 3 — Music catalog clients
+
+| ADR | Title | Status |
+|-----|-------|--------|
+| [ADR-03](step-03-music-catalog-clients.md) | Spotify and YouTube clients, fuzzy matching, track link cache | Accepted |
+
 ## Templates
 
 Step ADR:

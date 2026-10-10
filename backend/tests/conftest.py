@@ -2,6 +2,7 @@ from collections.abc import AsyncIterator, Iterator
 from pathlib import Path
 from typing import Any
 
+import httpx
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -64,3 +65,10 @@ async def session_factory(settings: Settings) -> AsyncIterator[async_sessionmake
         yield create_session_factory(engine)
     finally:
         await engine.dispose()
+
+
+@pytest.fixture
+async def http() -> AsyncIterator[httpx.AsyncClient]:
+    """HTTP client for the catalog clients; requests are intercepted with the respx_mock fixture."""
+    async with httpx.AsyncClient() as client:
+        yield client
