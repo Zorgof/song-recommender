@@ -133,3 +133,13 @@ async def test_feedback_score_must_be_binary(session_factory: SessionFactory) ->
         session.add(Feedback(recommendation_id="rec-1", score=5))
         with pytest.raises(IntegrityError, match="CHECK constraint failed"):
             await session.commit()
+
+
+async def test_one_feedback_per_recommendation(session_factory: SessionFactory) -> None:
+    async with session_factory() as session:
+        session.add(make_recommendation())
+        session.add(Feedback(recommendation_id="rec-1", score=1))
+        await session.commit()
+        session.add(Feedback(recommendation_id="rec-1", score=0))
+        with pytest.raises(IntegrityError, match="UNIQUE constraint failed"):
+            await session.commit()

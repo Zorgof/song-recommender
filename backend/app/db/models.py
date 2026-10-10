@@ -70,7 +70,7 @@ class Recommendation(Base):
     escalated: Mapped[bool] = mapped_column(default=False)
     error_code: Mapped[str | None] = mapped_column(String(64))
 
-    feedback: Mapped[list[Feedback]] = relationship(
+    feedback: Mapped[Feedback | None] = relationship(
         back_populates="recommendation", cascade="all, delete-orphan", passive_deletes=True
     )
 
@@ -82,8 +82,9 @@ class Feedback(Base):
     __table_args__ = (CheckConstraint("score IN (0, 1)", name="score_binary"),)
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    # One rating per recommendation; rating again replaces it (ADR-05).
     recommendation_id: Mapped[str] = mapped_column(
-        ForeignKey("recommendations.id", ondelete="CASCADE"), index=True
+        ForeignKey("recommendations.id", ondelete="CASCADE"), index=True, unique=True
     )
     # 1 = thumbs up, 0 = thumbs down
     score: Mapped[int] = mapped_column(SmallInteger)

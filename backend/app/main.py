@@ -20,7 +20,7 @@ from app.agents.graph import build_graph
 from app.agents.prompt_loader import PromptLibrary
 from app.agents.runner import RecommendationRunner
 from app.agents.state import AgentDeps
-from app.api import system
+from app.api import recommendations, system
 from app.config import Settings, get_settings
 from app.db.migrate import upgrade_to_head_async
 from app.db.repositories import RecommendationRepository
@@ -62,6 +62,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             AsyncSqliteSaver.from_conn_string(str(settings.checkpoints_path))
         )
         tracing = Tracing.from_settings(settings)
+        app.state.tracing = tracing
         stack.push_async_callback(tracing.flush)
         app.state.recommender = RecommendationRunner(
             build_graph(checkpointer),
@@ -142,4 +143,5 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.middleware("http")(_log_requests)
     register_error_handlers(app)
     app.include_router(system.router, prefix=API_PREFIX)
+    app.include_router(recommendations.router, prefix=API_PREFIX)
     return app

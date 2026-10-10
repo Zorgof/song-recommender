@@ -89,6 +89,11 @@ class RecommendationRunner:
             raise NotFoundError("Recommendation not found.")
         if row.status is not RecommendationStatus.NEEDS_CLARIFICATION:
             raise ConflictError("This recommendation is not waiting for an answer.")
+        snapshot = await self._graph.aget_state({"configurable": {"thread_id": request_id}})
+        if not snapshot.interrupts:
+            # The checkpoint is gone (e.g. checkpoints.db was deleted): it can never resume.
+            await self._deps.repository.fail(request_id, ConflictError.code)
+            raise ConflictError("The paused recommendation can no longer be resumed.")
         await self._deps.repository.save_clarification_answer(request_id, answer)
         locale: Locale = "pl" if row.locale == "pl" else "en"
         inputs = {

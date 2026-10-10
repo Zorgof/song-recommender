@@ -59,6 +59,12 @@ Rules:
 | [ADR-04](step-04-agent-graph.md) | LangGraph agents, clarification interrupt, persistence, LangSmith root runs | Accepted (amended by ADR-04.1) |
 | [ADR-04.1](step-04.1-three-candidates.md) | Three curator candidates per attempt instead of five | Accepted |
 
+### Step 5 — Recommendation API and history
+
+| ADR | Title | Status |
+|-----|-------|--------|
+| [ADR-05](step-05-recommendation-api.md) | Recommendation, clarification, history and feedback endpoints | Accepted |
+
 ## Templates
 
 Step ADR:

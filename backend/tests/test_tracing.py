@@ -22,50 +22,10 @@ from tests.agent_fakes import (
 )
 from tests.conftest import make_settings
 from tests.fakes import FAKE_LANGSMITH_KEY
+from tests.langsmith_fakes import PROJECT_ID, TENANT_ID, RecordingClient
 
 HOLOCENE = track("Holocene", "Bon Iver", "holocene-id")
 SIMPLE_EN = "I'm tired after a long day at work and want something calm to relax."
-PROJECT_ID = uuid.UUID("11111111-1111-4111-8111-111111111111")
-TENANT_ID = uuid.UUID("22222222-2222-4222-8222-222222222222")
-
-
-class RecordingClient(Client):
-    """Keeps created and updated runs in memory; makes no network calls."""
-
-    def __init__(self) -> None:
-        super().__init__(
-            api_key=FAKE_LANGSMITH_KEY,
-            api_url="https://api.smith.langchain.com",
-            auto_batch_tracing=False,
-        )
-        self.created: dict[str, dict[str, Any]] = {}
-        self.project_reads = 0
-
-    def create_run(self, *args: Any, **kwargs: Any) -> None:
-        run = {**kwargs}
-        self.created[str(run["id"])] = run
-
-    def update_run(self, run_id: Any, **kwargs: Any) -> None:
-        self.created.setdefault(str(run_id), {}).update(
-            {k: v for k, v in kwargs.items() if v is not None}
-        )
-
-    def read_project(self, **_: Any) -> TracerSession:
-        self.project_reads += 1
-        return TracerSession(
-            id=PROJECT_ID,
-            name="test-project",
-            tenant_id=TENANT_ID,
-            start_time="2026-10-10T00:00:00Z",
-            reference_dataset_id=None,
-            _host_url="https://smith.langchain.com",
-        )
-
-    def flush(self, timeout: float | None = None) -> None:
-        return None
-
-    def runs_named(self, name: str) -> list[dict[str, Any]]:
-        return [run for run in self.created.values() if run.get("name") == name]
 
 
 def metadata_of(run: dict[str, Any]) -> dict[str, Any]:

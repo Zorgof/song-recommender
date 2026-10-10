@@ -44,7 +44,7 @@ def test_startup_creates_database_with_schema(settings: Settings, client: TestCl
         version = conn.execute("SELECT version_num FROM alembic_version").fetchone()
 
     assert {"recommendations", "feedback", "track_link_cache"} <= tables
-    assert version == ("0001",)
+    assert version == ("0002",)
 
 
 def test_startup_is_idempotent(settings: Settings) -> None:

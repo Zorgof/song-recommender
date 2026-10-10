@@ -26,8 +26,13 @@ from app.config import Settings
 logger = logging.getLogger(__name__)
 
 ROOT_RUN_NAME = "recommend_song"
+FEEDBACK_KEY = "user_rating"
 # Namespace of the run id of the resumed run (after the clarifying question).
 _RESUME_NAMESPACE = uuid.UUID("0b6f6a1e-4f4e-4c49-9d43-6b1f1c1a9e57")
+# Namespace of the LangSmith feedback id of a recommendation's rating.
+_FEEDBACK_NAMESPACE = uuid.UUID("5d0f1c3a-8b7e-4a51-a3c2-6e9b2f4d7c10")
+# A rating is sent while the user waits; do not let the SDK retry for long.
+FEEDBACK_ATTEMPTS = 2
 
 
 def root_run_id(request_id: str, *, resumed: bool) -> uuid.UUID:
@@ -38,6 +43,11 @@ def root_run_id(request_id: str, *, resumed: bool) -> uuid.UUID:
     if not resumed:
         return uuid.UUID(request_id)
     return uuid.uuid5(_RESUME_NAMESPACE, request_id)
+
+
+def feedback_id(request_id: str) -> uuid.UUID:
+    """Stable id of the rating of a recommendation, so rating again updates it in LangSmith."""
+    return uuid.uuid5(_FEEDBACK_NAMESPACE, request_id)
 
 
 def build_client(settings: Settings) -> Client | None:
@@ -109,6 +119,46 @@ class Tracing:
             logger.info("LangSmith project not readable yet", extra={"error": type(exc).__name__})
             return None
         return project
+
+    async def send_feedback(
+        self, request_id: str, run_id: uuid.UUID, *, score: int, comment: str | None
+    ) -> bool:
+        """Create or update the rating of a run. Returns False (never raises) when tracing is
+        off or LangSmith fails; the caller keeps the rating as not synced."""
+        if self.client is None:
+            return False
+        client = self.client
+        project = self._project or await self._read_project()
+        self._project = project
+        fid = feedback_id(request_id)
+
+        def create() -> None:
+            client.create_feedback(
+                run_id=run_id,
+                key=FEEDBACK_KEY,
+                score=score,
+                comment=comment,
+                feedback_id=fid,
+                session_id=project.id if project else None,
+                stop_after_attempt=FEEDBACK_ATTEMPTS,
+            )
+
+        def update() -> None:
+            client.update_feedback(fid, score=score, comment=comment or "")
+
+        # The rating may or may not exist in LangSmith (an earlier sync may have failed after
+        # reaching it), so creating falls back to updating.
+        for attempt in (create, update):
+            try:
+                await asyncio.to_thread(attempt)
+                return True
+            except Exception as exc:
+                logger.info(
+                    "LangSmith feedback not sent",
+                    extra={"operation": attempt.__name__, "error": type(exc).__name__},
+                )
+        logger.warning("LangSmith feedback could not be synced", extra={"request_id": request_id})
+        return False
 
     async def flush(self) -> None:
         if self.client is not None:

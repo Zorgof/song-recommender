@@ -162,7 +162,7 @@ LangGraph checkpoints are stored in a separate `checkpoints.db` (`AsyncSqliteSav
 | `POST /api/recommendations/{id}/feedback` | `{score: "up" \| "down", comment?}` | `204` |
 | `GET /api/recommendations` | `?limit=20&offset=0` | History list |
 
-Errors use one shape: `{error: {code, message}}`. The frontend maps `code` to a localized message. Codes: `validation_error`, `llm_unavailable`, `catalog_unavailable`, `stt_unavailable`, `not_found`.
+Errors use one shape: `{error: {code, message}}`. The frontend maps `code` to a localized message. Codes: `validation_error`, `llm_unavailable`, `llm_invalid_output` (ADR-02), `catalog_unavailable`, `stt_unavailable`, `not_found`, `conflict` (ADR-04, ADR-05), `internal_error`.
 
 ### 2.7 Speech-to-text
 

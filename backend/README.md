@@ -42,9 +42,18 @@ tests/
 |----------|-------------|
 | `GET /api/health` | `{"status": "ok", "database": "ok"}`, or HTTP 503 when the database is unreachable |
 | `GET /api/meta` | Public configuration for the frontend (models per tier, STT/LangSmith/catalog flags, locales); never contains secrets |
+| `POST /api/recommendations` | `{text, input_mode, locale}` → `{status: "completed", recommendation}` or `{status: "needs_clarification", request_id, question}` |
+| `POST /api/recommendations/{id}/clarification` | `{answer}` → resumes the paused run; `404` unknown id, `409 conflict` if not waiting for an answer |
+| `GET /api/recommendations?limit=20&offset=0` | Completed recommendations, newest first, with their feedback and trace link: `{items, total, limit, offset}` |
+| `POST /api/recommendations/{id}/feedback` | `{score: "up" \| "down", comment?}` → `204`; one rating per recommendation (rating again replaces it); also sent to LangSmith |
 | `GET /api/docs` | Swagger UI; the OpenAPI schema is at `/api/openapi.json` |
 
 Every response carries an `X-Request-ID` header, generated or propagated from the request.
+Errors have the shape `{"error": {"code", "message"}}`; codes: `validation_error` (422),
+`not_found` (404), `conflict` (409), `llm_unavailable` (503), `llm_invalid_output` (502),
+`catalog_unavailable` (503), `stt_unavailable` (503), `internal_error` (500).
+Text limits (FR-6, counted after trimming): description 3–2000 characters, answer 1–2000,
+feedback comment up to 1000.
 
 ## LLM layer (`app/llm/`)
 
