@@ -1,0 +1,88 @@
+{
+  "app": {
+    "title": "Song Recommender",
+    "tagline": "Opowiedz, jak się czujesz i jak minął Ci dzień — dostaniesz jedną pasującą piosenkę."
+  },
+  "nav": {
+    "label": "Główna",
+    "home": "Polecanie",
+    "history": "Historia"
+  },
+  "language": {
+    "label": "Język"
+  },
+  "input": {
+    "label": "Jak się czujesz i jak minął Ci dzień?",
+    "placeholder": "np. Długi, męczący dzień w pracy. Chcę zwolnić przed jutrzejszą wczesną pobudką.",
+    "hint": "Pisz w dowolnym języku. Ctrl+Enter wysyła.",
+    "counter": "{{count}} / {{max}}",
+    "tooShort": "Napisz co najmniej {{min}} znaki.",
+    "submit": "Znajdź piosenkę"
+  },
+  "thinking": {
+    "title": "Szukam piosenki…",
+    "hint": "Agenci analizują Twój nastrój i sprawdzają Spotify oraz YouTube. To może potrwać do pół minuty."
+  },
+  "clarification": {
+    "title": "Jedno krótkie pytanie",
+    "answerLabel": "Twoja odpowiedź",
+    "submit": "Dalej",
+    "startOver": "Zacznij od nowa"
+  },
+  "result": {
+    "heading": "Twoja piosenka",
+    "need": "Co usłyszeliśmy",
+    "why": "Dlaczego ta piosenka",
+    "player": "Odtwarzacz Spotify: {{title}}, {{artist}}",
+    "albumArt": "Okładka albumu {{title}}",
+    "spotify": "Otwórz w Spotify",
+    "spotifySearch": "Szukaj w Spotify",
+    "youtube": "Obejrzyj na YouTube",
+    "youtubeSearch": "Szukaj na YouTube",
+    "unverified": "niezweryfikowany",
+    "unverifiedHint": "Nie udało się potwierdzić tego linku; otwiera wyszukiwanie.",
+    "trace": "Zobacz trace w LangSmith",
+    "again": "Opisz inną chwilę"
+  },
+  "feedback": {
+    "question": "Czy ta piosenka pasuje?",
+    "up": "Pasuje",
+    "down": "Nie pasuje",
+    "commentLabel": "Komentarz (opcjonalnie)",
+    "send": "Wyślij",
+    "sending": "Wysyłanie…",
+    "saved": "Dzięki! Ocena zapisana.",
+    "notSynced": "Zapisano lokalnie; trafi do LangSmith przy ponownej ocenie."
+  },
+  "history": {
+    "title": "Historia",
+    "loading": "Wczytywanie historii…",
+    "empty": "Nie ma jeszcze żadnych rekomendacji.",
+    "count_one": "{{count}} rekomendacja",
+    "count_few": "{{count}} rekomendacje",
+    "count_many": "{{count}} rekomendacji",
+    "count_other": "{{count}} rekomendacji",
+    "voice": "głos",
+    "question": "Pytanie",
+    "answer": "Odpowiedź",
+    "previous": "Poprzednia",
+    "next": "Następna",
+    "page": "Strona {{page}} z {{pages}}"
+  },
+  "errors": {
+    "title": "Coś poszło nie tak",
+    "retry": "Spróbuj ponownie",
+    "validation_error": "Zapytanie nie zostało przyjęte. Sprawdź tekst i spróbuj ponownie.",
+    "llm_unavailable": "Model językowy jest teraz niedostępny. Spróbuj ponownie za chwilę.",
+    "llm_invalid_output": "Model językowy zwrócił nieprzydatną odpowiedź. Spróbuj ponownie.",
+    "catalog_unavailable": "Spotify jest teraz niedostępne, więc nie udało się zweryfikować piosenki. Spróbuj później.",
+    "stt_unavailable": "Rozpoznawanie mowy jest teraz niedostępne.",
+    "audio_too_large": "Nagranie jest za duże.",
+    "unsupported_audio_format": "Ten format nagrania nie jest obsługiwany.",
+    "invalid_audio": "Nie udało się przetworzyć nagrania.",
+    "not_found": "Ta rekomendacja już nie istnieje.",
+    "conflict": "Tego zapytania nie można już kontynuować. Zacznij od nowa.",
+    "network_error": "Brak połączenia z serwerem. Sprawdź, czy backend działa.",
+    "internal_error": "Wystąpił nieoczekiwany błąd."
+  }
+}

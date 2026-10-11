@@ -71,6 +71,12 @@ Rules:
 |-----|-------|--------|
 | [ADR-06](step-06-speech-to-text.md) | STTProvider, OpenAI transcription (`gpt-transcribe`), transcription endpoint | Accepted |
 
+### Step 7 — Frontend: text flow and i18n
+
+| ADR | Title | Status |
+|-----|-------|--------|
+| [ADR-07](step-07-frontend-text-flow-and-i18n.md) | React app: text flow, result card, feedback, history, PL/EN i18n | Accepted |
+
 ## Templates
 
 Step ADR:

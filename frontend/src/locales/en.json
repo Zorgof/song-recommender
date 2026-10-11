@@ -1,0 +1,86 @@
+{
+  "app": {
+    "title": "Song Recommender",
+    "tagline": "Tell us how you feel and how your day went — get one song that fits."
+  },
+  "nav": {
+    "label": "Main",
+    "home": "Recommend",
+    "history": "History"
+  },
+  "language": {
+    "label": "Language"
+  },
+  "input": {
+    "label": "How are you, and how was your day?",
+    "placeholder": "e.g. A long, tiring day at work. I want to slow down before tomorrow's early start.",
+    "hint": "Write in any language. Press Ctrl+Enter to send.",
+    "counter": "{{count}} / {{max}}",
+    "tooShort": "Write at least {{min}} characters.",
+    "submit": "Find my song"
+  },
+  "thinking": {
+    "title": "Finding your song…",
+    "hint": "The agents are reading your mood and checking Spotify and YouTube. This can take up to half a minute."
+  },
+  "clarification": {
+    "title": "One quick question",
+    "answerLabel": "Your answer",
+    "submit": "Continue",
+    "startOver": "Start over"
+  },
+  "result": {
+    "heading": "Your song",
+    "need": "What we heard",
+    "why": "Why this song",
+    "player": "Spotify player: {{title}} by {{artist}}",
+    "albumArt": "Album art of {{title}}",
+    "spotify": "Open in Spotify",
+    "spotifySearch": "Search on Spotify",
+    "youtube": "Watch on YouTube",
+    "youtubeSearch": "Search on YouTube",
+    "unverified": "unverified",
+    "unverifiedHint": "We could not confirm this link; it opens a search instead.",
+    "trace": "View trace in LangSmith",
+    "again": "Describe another moment"
+  },
+  "feedback": {
+    "question": "Does this song fit?",
+    "up": "It fits",
+    "down": "It doesn't fit",
+    "commentLabel": "Comment (optional)",
+    "send": "Send",
+    "sending": "Sending…",
+    "saved": "Thanks! Your rating is saved.",
+    "notSynced": "Saved locally; it will reach LangSmith when you rate again."
+  },
+  "history": {
+    "title": "History",
+    "loading": "Loading history…",
+    "empty": "No recommendations yet.",
+    "count_one": "{{count}} recommendation",
+    "count_other": "{{count}} recommendations",
+    "voice": "voice",
+    "question": "Question",
+    "answer": "Answer",
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page {{page}} of {{pages}}"
+  },
+  "errors": {
+    "title": "Something went wrong",
+    "retry": "Try again",
+    "validation_error": "The request was not accepted. Check the text and try again.",
+    "llm_unavailable": "The language model is unavailable right now. Please try again in a moment.",
+    "llm_invalid_output": "The language model returned an unusable answer. Please try again.",
+    "catalog_unavailable": "Spotify is unavailable right now, so the song could not be verified. Please try again later.",
+    "stt_unavailable": "Speech recognition is unavailable right now.",
+    "audio_too_large": "The recording is too large.",
+    "unsupported_audio_format": "This recording format is not supported.",
+    "invalid_audio": "The recording could not be processed.",
+    "not_found": "This recommendation no longer exists.",
+    "conflict": "This request can no longer be continued. Please start over.",
+    "network_error": "Cannot reach the server. Check that the backend is running.",
+    "internal_error": "An unexpected error occurred."
+  }
+}

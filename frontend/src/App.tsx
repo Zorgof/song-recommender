@@ -1,10 +1,17 @@
-function App() {
+import { Route, Routes } from 'react-router'
+
+import { Layout } from './components/Layout'
+import { HistoryPage } from './pages/HistoryPage'
+import { HomePage } from './pages/HomePage'
+
+export default function App() {
   return (
-    <main className="app">
-      <h1>Song Recommender</h1>
-      <p>Describe your mood and your day — get one song that fits.</p>
-    </main>
+    <Routes>
+      <Route element={<Layout />}>
+        <Route index element={<HomePage />} />
+        <Route path="history" element={<HistoryPage />} />
+        <Route path="*" element={<HomePage />} />
+      </Route>
+    </Routes>
   )
 }
-
-export default App
