@@ -57,12 +57,12 @@ select = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["app", "tests"]
+known-first-party = ["app", "tests", "evals"]
 
 [tool.mypy]
 python_version = "3.14"
 strict = true
-packages = ["app", "tests"]
+packages = ["app", "tests", "evals"]
 plugins = ["pydantic.mypy"]
 
 [tool.pydantic-mypy]

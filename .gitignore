@@ -228,5 +228,7 @@ initial-projects-notes.md
 /data/*
 !/data/.gitkeep
 /backend/data/
+# Evaluation runs: their own database and catalog cache (backend/evals/target.py).
+/backend/evals/.data/
 # Node.js
 node_modules/

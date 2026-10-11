@@ -89,6 +89,12 @@ Rules:
 |-----|-------|--------|
 | [ADR-09](step-09-docker.md) | Docker images, nginx, Compose (prod + dev), data volume ownership | Accepted |
 
+### Step 10 — Evals and tuning groundwork
+
+| ADR | Title | Status |
+|-----|-------|--------|
+| [ADR-10](step-10-evals.md) | LangSmith dataset, eval target, metrics, aspect-based LLM judge, baseline | Accepted |
+
 ## Templates
 
 Step ADR:

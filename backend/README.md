@@ -34,6 +34,7 @@ app/
   agents/            LangGraph graph, nodes, schemas, versioned prompts, RecommendationRunner
   observability/     LangSmith client, root runs, trace URLs
   db/                SQLAlchemy models, async engine, Alembic migrations
+evals/               LangSmith evaluation: dataset, target, evaluators, judge prompt, CLI
 tests/
 ```
 
@@ -141,6 +142,39 @@ route_request → need_analyst → [ask_clarification → need_analyst]
   `recommend_song` (`run_id` = request id; the resumed run gets a derived id in the same
   thread). It carries the verbatim input, models, prompt versions, routing, escalations and
   tags, and LLM, node and catalog runs nest under it.
+
+## Evaluations (`evals/`)
+
+An experiment runs the real agent graph (real models, real Spotify) on every example of
+`evals/dataset.jsonl` and scores the results in LangSmith. It needs the same `.env` as the
+app, with LangSmith enabled.
+
+```bash
+uv run python -m evals.run_evals --limit 3            # smoke run, ~30 s
+uv run python -m evals.run_evals                      # all 32 examples, ~3-4 min
+uv run python -m evals.run_evals --repetitions 3 --description "curator v2: ..."
+uv run python -m evals.run_evals --sync-only          # only update the LangSmith dataset
+```
+
+- **Dataset.** `dataset.jsonl` is the source of truth. Every run syncs it to the LangSmith
+  dataset `song-recommender-evals`: new lines are created, changed ones updated, removed ones
+  deleted (example ids are derived from the line's `id`).
+- **Target** (`target.py`). One example = one graph run, with no exclusion history. A
+  clarifying question is answered with the example's `clarification_answer`, or a generic
+  answer. App errors count as failed examples. A separate database (`evals/.data/`, git-ignored)
+  is used and is also the catalog cache. YouTube is off unless `--with-youtube` (daily quota).
+- **Metrics** (`evaluators.py`):
+  - per example: `completed`, `spotify_verified`, `latency_s`, `within_15s` (NFR-3),
+    `escalated`, `curation_attempts`, `clarified`, `explanation_language` (FR-15);
+  - LLM-as-judge `fit` (0-1) with aspects `fit_energy`, `fit_goal`, `fit_requests`,
+    `fit_specificity` and `profile_faithful`; prompt `evals/prompts/fit_judge.v<N>.md`;
+    model: `LLM_HEAVY`, or `--judge-model provider:model`;
+  - over the experiment: `distinct_songs`, `distinct_artists`.
+- **Comparing versions.** Experiments are named after the prompt versions
+  (`curator-v1.need_analyst-v1.router-v1-<id>`); their metadata records the prompt versions,
+  models, judge model and prompt, candidate count, app version, dataset version and git
+  commit. Compare them in LangSmith: Datasets → `song-recommender-evals` → Experiments. Results
+  vary between runs, so compare with `--repetitions 2` or more.
 
 ## Database and migrations
 

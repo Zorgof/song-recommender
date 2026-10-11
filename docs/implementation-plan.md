@@ -195,7 +195,7 @@ song-recommender/
 │   │   ├── stt/            # base.py, openai_stt.py
 │   │   ├── db/             # models.py, session.py, repositories.py, migrations/
 │   │   └── observability/  # langsmith helpers (metadata, feedback, trace URL)
-│   ├── evals/              # dataset.jsonl, run_evals.py, evaluators.py
+│   ├── evals/              # dataset.jsonl, run_evals.py, evaluators.py, dataset.py, target.py, prompts/ (ADR-10)
 │   └── tests/
 ├── frontend/               # src/ (incl. locales/en.json, locales/pl.json), package.json, vite.config.ts, Dockerfile, nginx.conf
 ├── docs/                   # requirements, implementation plan, architecture, configuration, tuning guide
