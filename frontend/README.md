@@ -69,7 +69,8 @@ src/
   summary, the explanation and a LangSmith trace link when tracing is on.
 - **Feedback (FR-43):** a thumb is sent at once; an optional comment is sent with "Send". Rating
   again replaces the earlier rating. Ratings can also be given or changed in the history.
-- **History (FR-51):** 20 per page, page number in the URL (`/history?page=2`).
+- **History (FR-51):** 20 per page, page number in the URL (`/history?page=2`). It lists only
+  the recommendations made in this browser (the backend's visitor cookie, ADR-11.1).
 - **Errors:** the backend's `error.code` (and `network_error` for an unreachable server) is
   mapped to a message in `locales/*.json` under `errors.*`; unknown codes show `internal_error`.
 - **Translation keys are type-checked** (`i18n/i18next.d.ts`), and a test checks that `en.json`

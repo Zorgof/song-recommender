@@ -102,7 +102,7 @@ first, and to tune it later.
 
 | ID | Requirement |
 |----|-------------|
-| NFR-1 | **Single user, local hosting, no authentication.** |
+| NFR-1 | **Single user, local hosting, no authentication.** Amended by [ADR-11.1](adr/step-11.1-visitors-and-daily-limits.md) for public testing: still no accounts, but each browser is an anonymous visitor with its own history and daily limits. |
 | NFR-2 | API keys live only in the backend. They are never sent to the browser and never logged. |
 | NFR-3 | Target latency: under 15 s end to end for a text request in the typical case. |
 | NFR-4 | The browser only allows the microphone in a *secure context*. `http://localhost` works. Access from another device on the LAN needs HTTPS (a documented reverse-proxy option). |

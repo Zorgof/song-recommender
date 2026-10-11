@@ -21,6 +21,7 @@ from app.agents.prompt_loader import PromptLibrary
 from app.agents.runner import RecommendationRunner
 from app.agents.state import AgentDeps
 from app.api import recommendations, system, transcriptions
+from app.api.visitors import identify_visitor
 from app.config import Settings, get_settings
 from app.db.migrate import upgrade_to_head_async
 from app.db.repositories import RecommendationRepository
@@ -147,6 +148,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             allow_headers=["*"],
             expose_headers=[REQUEST_ID_HEADER],
         )
+    app.middleware("http")(identify_visitor)
     app.middleware("http")(_log_requests)
     register_error_handlers(app)
     app.include_router(system.router, prefix=API_PREFIX)

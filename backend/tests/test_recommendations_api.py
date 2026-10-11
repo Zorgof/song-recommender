@@ -1,6 +1,7 @@
 """Recommendation API end to end: real app, routers, runner and graph; fake LLMs and catalog."""
 
 from collections.abc import Awaitable, Callable, Iterator
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -10,6 +11,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
+from app.api.visitors import VISITOR_COOKIE
 from app.db.models import Feedback, Recommendation, RecommendationStatus
 from app.observability.tracing import (
     FEEDBACK_KEY,
@@ -436,3 +438,152 @@ def test_feedback_errors(api: tuple[TestClient, UseHarness]) -> None:
     assert (not_completed.status_code, not_completed.json()["error"]["code"]) == (409, "conflict")
     assert bad_score.status_code == 422
     assert long_comment.status_code == 422
+
+
+# --- Visitors (ADR-11.1) ---
+
+
+def as_new_visitor(client: TestClient) -> None:
+    """Drop the visitor cookie: the next request comes from another browser."""
+    client.cookies.clear()
+
+
+def test_history_lists_only_the_visitors_own_recommendations(
+    api: tuple[TestClient, UseHarness],
+) -> None:
+    client, use = api
+    use()
+    mine = recommend(client)["recommendation"]["request_id"]
+    my_cookie = client.cookies[VISITOR_COOKIE]
+
+    as_new_visitor(client)
+    theirs = recommend(client)["recommendation"]["request_id"]
+    their_history = client.get("/api/recommendations").json()
+    client.cookies.set(VISITOR_COOKIE, my_cookie)
+    my_history = client.get("/api/recommendations").json()
+
+    assert [item["request_id"] for item in their_history["items"]] == [theirs]
+    assert their_history["total"] == 1
+    assert [item["request_id"] for item in my_history["items"]] == [mine]
+    assert my_history["total"] == 1
+
+
+def test_another_visitor_cannot_answer_or_rate_a_recommendation(
+    api: tuple[TestClient, UseHarness], app: FastAPI
+) -> None:
+    client, use = api
+    use({**SCRIPT, "NeedProfile": [clarification_profile("How are you?"), need_profile()]})
+    waiting = recommend(client, text="hmm")["request_id"]
+
+    as_new_visitor(client)
+    answer = client.post(f"/api/recommendations/{waiting}/clarification", json={"answer": "x"})
+    rating = client.post(f"/api/recommendations/{waiting}/feedback", json={"score": "up"})
+
+    assert (answer.status_code, answer.json()["error"]["code"]) == (404, "not_found")
+    assert (rating.status_code, rating.json()["error"]["code"]) == (404, "not_found")
+    assert db_row(app, waiting).status is RecommendationStatus.NEEDS_CLARIFICATION
+
+
+def test_recent_songs_are_excluded_per_visitor(api: tuple[TestClient, UseHarness]) -> None:
+    client, use = api
+    harness = use()
+    recommend(client)  # Holocene
+    my_cookie = client.cookies[VISITOR_COOKIE]
+
+    as_new_visitor(client)
+    recommend(client)
+    client.cookies.set(VISITOR_COOKIE, my_cookie)
+    recommend(client)
+
+    curator_prompts = [str(call[1].content) for call in harness.light.calls_for("CuratorOutput")]
+    assert "Holocene" not in curator_prompts[1]  # the other visitor's request
+    assert "Holocene" in curator_prompts[2]  # my next request
+
+
+# --- Daily limits (ADR-11.1) ---
+
+
+def limit_recommendations(app: FastAPI, limit: int) -> None:
+    app.state.settings = app.state.settings.model_copy(update={"daily_recommendation_limit": limit})
+
+
+def test_daily_limit_stops_new_recommendations(
+    api: tuple[TestClient, UseHarness], app: FastAPI
+) -> None:
+    client, use = api
+    harness = use()
+    limit_recommendations(app, 2)
+    recommend(client)
+    recommend(client)
+    calls = len(harness.light.calls)
+
+    response = recommend_raw(client)
+
+    assert response.status_code == 429
+    assert response.json()["error"]["code"] == "daily_limit_reached"
+    assert len(harness.light.calls) == calls  # no LLM call
+    assert client.get("/api/recommendations").json()["total"] == 2
+
+
+def test_answering_the_question_does_not_count(
+    api: tuple[TestClient, UseHarness], app: FastAPI
+) -> None:
+    client, use = api
+    use({**SCRIPT, "NeedProfile": [clarification_profile("How are you?"), need_profile()]})
+    limit_recommendations(app, 1)
+    request_id = recommend(client, text="hmm")["request_id"]
+
+    answer = client.post(
+        f"/api/recommendations/{request_id}/clarification", json={"answer": "Tired."}
+    )
+
+    assert answer.status_code == 200, answer.text
+    assert recommend_raw(client).status_code == 429
+
+
+def test_daily_limit_is_per_visitor_and_per_day(
+    api: tuple[TestClient, UseHarness], app: FastAPI, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    client, use = api
+    use()
+    limit_recommendations(app, 1)
+    recommend(client)
+    assert recommend_raw(client).status_code == 429
+    my_cookie = client.cookies[VISITOR_COOKIE]
+
+    as_new_visitor(client)
+    other_visitor = recommend_raw(client)
+    client.cookies.set(VISITOR_COOKIE, my_cookie)
+    tomorrow = datetime.now(UTC) + timedelta(days=1)
+    monkeypatch.setattr("app.api.limits.utc_now", lambda: tomorrow)
+    next_day = recommend_raw(client)
+
+    assert other_visitor.status_code == 200, other_visitor.text
+    assert next_day.status_code == 200, next_day.text
+
+
+def test_invalid_requests_do_not_count(api: tuple[TestClient, UseHarness], app: FastAPI) -> None:
+    client, use = api
+    use()
+    limit_recommendations(app, 1)
+
+    invalid = client.post("/api/recommendations", json={"text": "a", "locale": "en"})
+
+    assert invalid.status_code == 422
+    assert recommend_raw(client).status_code == 200
+
+
+def test_zero_means_no_daily_limit(api: tuple[TestClient, UseHarness], app: FastAPI) -> None:
+    client, use = api
+    use()
+    limit_recommendations(app, 0)
+
+    statuses = [recommend_raw(client).status_code for _ in SONGS]
+
+    assert statuses == [200] * len(SONGS)
+
+
+def recommend_raw(client: TestClient) -> Any:
+    return client.post(
+        "/api/recommendations", json={"text": SIMPLE_EN, "input_mode": "text", "locale": "en"}
+    )

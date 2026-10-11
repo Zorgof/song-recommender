@@ -1,9 +1,10 @@
-"""Repositories of the `recommendations` and `feedback` tables.
+"""Repositories of the `recommendations`, `feedback` and `daily_usage` tables.
 
 They take a session factory rather than a request session: the agent graph writes results
 outside FastAPI's dependency injection.
 """
 
+from datetime import date
 from typing import Any
 
 from sqlalchemy import func, select, update
@@ -12,7 +13,14 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import selectinload
 
 from app.db.base import utc_now
-from app.db.models import Feedback, InputMode, Recommendation, RecommendationStatus
+from app.db.models import (
+    DailyUsage,
+    Feedback,
+    InputMode,
+    Recommendation,
+    RecommendationStatus,
+    UsageAction,
+)
 
 
 class RecommendationRepository:
@@ -20,12 +28,22 @@ class RecommendationRepository:
         self._session_factory = session_factory
 
     async def create(
-        self, request_id: str, *, locale: str, input_mode: InputMode, input_text: str
+        self,
+        request_id: str,
+        *,
+        locale: str,
+        input_mode: InputMode,
+        input_text: str,
+        visitor_id: str | None = None,
     ) -> None:
         async with self._session_factory() as session:
             session.add(
                 Recommendation(
-                    id=request_id, locale=locale, input_mode=input_mode, input_text=input_text
+                    id=request_id,
+                    visitor_id=visitor_id,
+                    locale=locale,
+                    input_mode=input_mode,
+                    input_text=input_text,
                 )
             )
             await session.commit()
@@ -89,13 +107,17 @@ class RecommendationRepository:
     async def fail(self, request_id: str, error_code: str) -> None:
         await self._update(request_id, status=RecommendationStatus.FAILED, error_code=error_code)
 
-    async def recent_tracks(self, limit: int) -> list[dict[str, str]]:
-        """Title and artist of the last `limit` completed recommendations, newest first."""
+    async def recent_tracks(
+        self, limit: int, *, visitor_id: str | None = None
+    ) -> list[dict[str, str]]:
+        """Title and artist of the visitor's last `limit` completed recommendations, newest
+        first. `visitor_id=None` selects the requests made without a visitor."""
         if limit <= 0:
             return []
         statement = (
             select(Recommendation.title, Recommendation.artist)
             .where(
+                Recommendation.visitor_id == visitor_id,
                 Recommendation.status == RecommendationStatus.COMPLETED,
                 Recommendation.title.is_not(None),
                 Recommendation.artist.is_not(None),
@@ -107,10 +129,14 @@ class RecommendationRepository:
             rows = (await session.execute(statement)).all()
         return [{"title": str(title), "artist": str(artist)} for title, artist in rows]
 
-    async def list_completed(self, *, limit: int, offset: int) -> tuple[list[Recommendation], int]:
-        """A page of completed recommendations, newest first, with their feedback; and the
-        total number of completed recommendations."""
-        completed = Recommendation.status == RecommendationStatus.COMPLETED
+    async def list_completed(
+        self, visitor_id: str, *, limit: int, offset: int
+    ) -> tuple[list[Recommendation], int]:
+        """A page of the visitor's completed recommendations, newest first, with their
+        feedback; and the total number of the visitor's completed recommendations."""
+        completed = (Recommendation.visitor_id == visitor_id) & (
+            Recommendation.status == RecommendationStatus.COMPLETED
+        )
         page = (
             select(Recommendation)
             .where(completed)
@@ -166,3 +192,31 @@ class FeedbackRepository:
                 .values(synced_to_langsmith=True)
             )
             await session.commit()
+
+
+class UsageRepository:
+    """Per-visitor, per-day counters of limited actions."""
+
+    def __init__(self, session_factory: async_sessionmaker[AsyncSession]) -> None:
+        self._session_factory = session_factory
+
+    async def try_use(self, visitor_id: str, action: UsageAction, *, day: date, limit: int) -> bool:
+        """Count one use if fewer than `limit` were counted that day; False when none is left.
+
+        One upsert statement checks and counts, so concurrent requests cannot both take the
+        last use.
+        """
+        statement = (
+            insert(DailyUsage)
+            .values(visitor_id=visitor_id, day=day, action=action, used=1)
+            .on_conflict_do_update(
+                index_elements=[DailyUsage.visitor_id, DailyUsage.day, DailyUsage.action],
+                set_={"used": DailyUsage.used + 1},
+                where=DailyUsage.used < limit,
+            )
+            .returning(DailyUsage.used)
+        )
+        async with self._session_factory() as session:
+            used = (await session.execute(statement)).scalar_one_or_none()
+            await session.commit()
+        return used is not None

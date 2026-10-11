@@ -22,7 +22,10 @@ export function HistoryPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">{t('history.title')}</h1>
+      <div className="space-y-1">
+        <h1 className="text-2xl font-bold">{t('history.title')}</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">{t('history.scope')}</p>
+      </div>
 
       {history.isPending && <p role="status">{t('history.loading')}</p>}
       {history.isError && (

@@ -43,6 +43,14 @@ class ConflictError(AppError):
     default_message = "The request conflicts with the current state of the resource."
 
 
+class DailyLimitReachedError(AppError):
+    """The visitor used up today's recommendations or transcriptions (ADR-11.1)."""
+
+    code = "daily_limit_reached"
+    status_code = status.HTTP_429_TOO_MANY_REQUESTS
+    default_message = "The daily limit is reached. Please come back tomorrow."
+
+
 class LLMUnavailableError(AppError):
     code = "llm_unavailable"
     status_code = status.HTTP_503_SERVICE_UNAVAILABLE

@@ -5,6 +5,7 @@ export type ErrorCode = Exclude<keyof typeof en.errors, 'title' | 'retry'>
 
 const KNOWN_CODES: ReadonlySet<string> = new Set<ErrorCode>([
   'validation_error',
+  'daily_limit_reached',
   'llm_unavailable',
   'llm_invalid_output',
   'catalog_unavailable',

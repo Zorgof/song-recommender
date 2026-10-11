@@ -47,13 +47,18 @@ tests/
 | `POST /api/transcriptions` | multipart field `audio` (webm/ogg/mp4/wav, ≤ 10 MB) → `{text, language, duration_s}`; `503 stt_unavailable` when STT is disabled |
 | `POST /api/recommendations` | `{text, input_mode, locale, transcript?}` → `{status: "completed", recommendation}` or `{status: "needs_clarification", request_id, question}`. `transcript` (voice only) is the raw transcript before the user's edits; it goes to the trace |
 | `POST /api/recommendations/{id}/clarification` | `{answer}` → resumes the paused run; `404` unknown id, `409 conflict` if not waiting for an answer |
-| `GET /api/recommendations?limit=20&offset=0` | Completed recommendations, newest first, with their feedback and trace link: `{items, total, limit, offset}` |
+| `GET /api/recommendations?limit=20&offset=0` | The visitor's completed recommendations, newest first, with their feedback and trace link: `{items, total, limit, offset}` |
 | `POST /api/recommendations/{id}/feedback` | `{score: "up" \| "down", comment?}` → `204`; one rating per recommendation (rating again replaces it); also sent to LangSmith |
 | `GET /api/docs` | Swagger UI; the OpenAPI schema is at `/api/openapi.json` |
 
 Every response carries an `X-Request-ID` header, generated or propagated from the request.
+Each browser is an anonymous visitor, identified by the `sr_visitor` cookie the backend sets
+(`app/api/visitors.py`). Recommendations, the history, clarification answers and feedback
+belong to one visitor (another visitor's id gives `404`), and the daily limits
+(`DAILY_RECOMMENDATION_LIMIT`, `DAILY_TRANSCRIPTION_LIMIT`) count per visitor
+(`429 daily_limit_reached`). See ADR-11.1.
 Errors have the shape `{"error": {"code", "message"}}`; codes: `validation_error` (422),
-`not_found` (404), `conflict` (409), `llm_unavailable` (503), `llm_invalid_output` (502),
+`not_found` (404), `conflict` (409), `daily_limit_reached` (429), `llm_unavailable` (503), `llm_invalid_output` (502),
 `catalog_unavailable` (503), `stt_unavailable` (503), `audio_too_large` (413),
 `unsupported_audio_format` (415), `invalid_audio` (422), `internal_error` (500).
 Text limits (FR-6, counted after trimming): description 3–2000 characters, answer 1–2000,

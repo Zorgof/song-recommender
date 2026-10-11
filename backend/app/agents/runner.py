@@ -3,7 +3,7 @@
 Responsibilities around the graph itself:
 - the `recommendations` row: created as pending, set to needs_clarification while the graph
   waits for an answer, failed with the error code when a run fails (`finalize` completes it);
-- the exclusion list (recent recommendations) passed into the graph;
+- the exclusion list (the visitor's recent recommendations) passed into the graph;
 - the LangSmith root run: id, inputs, metadata and tags (implementation plan, 2.4).
 """
 
@@ -57,19 +57,34 @@ class RecommendationRunner:
         self._history_exclude_last_n = history_exclude_last_n
 
     async def start(
-        self, text: str, *, input_mode: InputMode, locale: Locale, transcript: str | None = None
+        self,
+        text: str,
+        *,
+        input_mode: InputMode,
+        locale: Locale,
+        transcript: str | None = None,
+        visitor_id: str | None = None,
     ) -> RunOutcome:
         """Start a recommendation. `transcript` is the raw speech transcript, if the (possibly
-        edited) text came from voice input; it is recorded in the trace only."""
+        edited) text came from voice input; it is recorded in the trace only. `visitor_id` is
+        the browser that asked; it owns the request and its recent songs are excluded."""
         request_id = str(uuid.uuid4())
         repository = self._deps.repository
-        await repository.create(request_id, locale=locale, input_mode=input_mode, input_text=text)
+        await repository.create(
+            request_id,
+            locale=locale,
+            input_mode=input_mode,
+            input_text=text,
+            visitor_id=visitor_id,
+        )
         state: GraphState = {
             "request_id": request_id,
             "locale": locale,
             "user_input": text,
             "input_mode": input_mode.value,
-            "excluded_tracks": await repository.recent_tracks(self._history_exclude_last_n),
+            "excluded_tracks": await repository.recent_tracks(
+                self._history_exclude_last_n, visitor_id=visitor_id
+            ),
         }
         inputs: dict[str, Any] = {
             "user_input": text,

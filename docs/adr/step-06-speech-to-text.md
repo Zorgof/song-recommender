@@ -1,6 +1,6 @@
 # ADR-06: Step 6 — Speech-to-text (OpenAI)
 
-- Status: Accepted
+- Status: Accepted (amended by [ADR-11.1](step-11.1-visitors-and-daily-limits.md))
 - Date: 2026-10-11
 - Step: 6
 

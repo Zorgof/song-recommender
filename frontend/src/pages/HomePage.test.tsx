@@ -119,6 +119,17 @@ describe('HomePage', () => {
     expect(calls).toHaveLength(2)
   })
 
+  it('explains the daily limit', async () => {
+    mockFetch(() => apiError('daily_limit_reached', 429))
+    const { user } = renderApp()
+
+    await describeDay(user)
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      "You have used today's limit for this test version.",
+    )
+  })
+
   it('keeps the question after a failed answer, but not after a conflict', async () => {
     const answers = [apiError('catalog_unavailable', 503), apiError('conflict', 409)]
     mockFetch(({ path }) =>

@@ -159,13 +159,26 @@ parsed result is always validated with Pydantic.
 
 | Store | Contents |
 |-------|----------|
-| `app.db` — `recommendations` | id (= request id = trace id), time, locale, input text and mode, clarification question and answer, Need Profile, chosen song, links and their verification flags, explanation, models used, escalated flag, status (`pending`, `needs_clarification`, `completed`, `failed` with the error code) |
+| `app.db` — `recommendations` | id (= request id = trace id), visitor id, time, locale, input text and mode, clarification question and answer, Need Profile, chosen song, links and their verification flags, explanation, models used, escalated flag, status (`pending`, `needs_clarification`, `completed`, `failed` with the error code) |
 | `app.db` — `feedback` | one rating per recommendation (rating again replaces it), comment, `synced_to_langsmith` |
 | `app.db` — `track_link_cache` | Spotify and YouTube lookups by normalized "artist\|title"; found results are kept 30 days, "not found" 1 day; saves YouTube quota |
+| `app.db` — `daily_usage` | per visitor, UTC day and action (`recommendation`, `transcription`): how many were used, for the daily limits |
 | `checkpoints.db` | LangGraph checkpoints: the state of runs paused at the clarifying question |
 
 Both files live in `DATA_DIR` (`./data` on the host when running in Docker). The history
-excludes songs from the last `HISTORY_EXCLUDE_LAST_N` recommendations.
+excludes songs from the visitor's last `HISTORY_EXCLUDE_LAST_N` recommendations.
+
+### Visitors and daily limits
+
+There are no accounts. The backend gives each browser a random visitor id in an `HttpOnly`,
+`SameSite=Lax` cookie (`sr_visitor`, path `/api`, 400 days, `Secure` over HTTPS). A
+recommendation belongs to the visitor that started it: the history lists only the visitor's own
+recommendations, and another visitor's id is answered with `404 not_found` on the clarification
+and feedback endpoints. Each visitor may start `DAILY_RECOMMENDATION_LIMIT` recommendations and
+transcribe `DAILY_TRANSCRIPTION_LIMIT` recordings per UTC day. A private window or cleared
+cookies start a new visitor with an empty history and fresh limits, so the limits slow down
+casual overuse; the provider's spend limit stays the hard ceiling. See
+[ADR-11.1](adr/step-11.1-visitors-and-daily-limits.md).
 
 ## REST API
 
@@ -177,7 +190,7 @@ excludes songs from the last `HISTORY_EXCLUDE_LAST_N` recommendations.
 | `POST /api/recommendations` | `{text, input_mode, locale, transcript?}` | `{status: "completed", recommendation}` or `{status: "needs_clarification", request_id, question}` |
 | `POST /api/recommendations/{id}/clarification` | `{answer}` | the same union |
 | `POST /api/recommendations/{id}/feedback` | `{score: "up" \| "down", comment?}` | `204` |
-| `GET /api/recommendations` | `?limit=20&offset=0` | completed recommendations, newest first, with feedback and trace link |
+| `GET /api/recommendations` | `?limit=20&offset=0` | the visitor's completed recommendations, newest first, with feedback and trace link |
 
 The OpenAPI schema and Swagger UI are at `/api/docs`. Errors have one shape,
 `{"error": {"code", "message"}}`:
@@ -185,7 +198,8 @@ The OpenAPI schema and Swagger UI are at `/api/docs`. Errors have one shape,
 | Code | HTTP | Meaning |
 |------|------|---------|
 | `validation_error` | 422 | invalid request (e.g. text under 3 or over 2000 characters) |
-| `not_found` | 404 | unknown recommendation id |
+| `not_found` | 404 | unknown recommendation id, or one started by another visitor |
+| `daily_limit_reached` | 429 | the visitor used up today's recommendations or transcriptions |
 | `conflict` | 409 | e.g. answering a question that is not waiting for an answer |
 | `llm_unavailable` | 503 | the model provider failed (and the fallback, if any) |
 | `llm_invalid_output` | 502 | the heavy model returned output that does not match the schema |

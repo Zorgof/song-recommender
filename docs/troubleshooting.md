@@ -99,6 +99,19 @@ because both agents run on the heavy tier, and a curator retry adds more. nginx 
 **120 s** for the backend, then returns 504; if that happens, the provider is very slow:
 consider a faster `LLM_HEAVY`, `LLM_HEAVY_REASONING=off`, or a lower `LLM_TIMEOUT_SECONDS`.
 
+### "You have used today's limit" (`daily_limit_reached`)
+
+Each browser may start `DAILY_RECOMMENDATION_LIMIT` (default 10) recommendations and transcribe
+`DAILY_TRANSCRIPTION_LIMIT` (default 20) recordings per day; the counters reset at midnight
+UTC. For local use, set both to `0` in `.env` to turn the limits off, then restart the backend.
+
+### The history is empty, or older recommendations are missing
+
+The history shows only the recommendations made in the current browser (it is identified by
+the `sr_visitor` cookie). Another browser, a private window or cleared cookies start an empty
+history. Recommendations made before visitors were introduced (ADR-11.1) are still in
+`data/app.db` but belong to no browser, so they are not listed.
+
 ### "This request can no longer be continued" (`conflict`) when answering a question
 
 The question was already answered, or the paused state is gone (e.g. `data/checkpoints.db` was
@@ -106,7 +119,8 @@ deleted). Start over with a new description.
 
 ### The same songs keep coming back
 
-Songs from the last `HISTORY_EXCLUDE_LAST_N` (default 50) recommendations are excluded.
+Songs from the browser's last `HISTORY_EXCLUDE_LAST_N` (default 50) recommendations are
+excluded.
 Beyond that, the curator tends to favour well-known songs for a mood; this is measured by the
 evaluation (`distinct_songs`, `fit_specificity`) and is a prompt-tuning topic, see
 [Observability and tuning](observability-and-tuning.md#changing-a-prompt).

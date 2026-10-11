@@ -25,6 +25,9 @@ describe('HistoryPage', () => {
 
     expect(await screen.findByRole('heading', { level: 3, name: 'Holocene' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { level: 1, name: 'History' })).toBeInTheDocument()
+    expect(
+      screen.getByText('Only recommendations made in this browser are shown.'),
+    ).toBeInTheDocument()
     expect(screen.getByText('1 recommendation')).toBeInTheDocument()
     expect(screen.getByText('Long day, need to relax.')).toBeInTheDocument()
     expect(screen.getByText('voice')).toBeInTheDocument()

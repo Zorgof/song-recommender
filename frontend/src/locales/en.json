@@ -79,6 +79,7 @@
   "history": {
     "title": "History",
     "loading": "Loading history…",
+    "scope": "Only recommendations made in this browser are shown.",
     "empty": "No recommendations yet.",
     "count_one": "{{count}} recommendation",
     "count_other": "{{count}} recommendations",
@@ -93,6 +94,7 @@
     "title": "Something went wrong",
     "retry": "Try again",
     "validation_error": "The request was not accepted. Check the text and try again.",
+    "daily_limit_reached": "You have used today's limit for this test version. Please come back tomorrow.",
     "llm_unavailable": "The language model is unavailable right now. Please try again in a moment.",
     "llm_invalid_output": "The language model returned an unusable answer. Please try again.",
     "catalog_unavailable": "Spotify is unavailable right now, so the song could not be verified. Please try again later.",

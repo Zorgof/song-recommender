@@ -79,6 +79,7 @@
   "history": {
     "title": "Historia",
     "loading": "Wczytywanie historii…",
+    "scope": "Widać tylko rekomendacje z tej przeglądarki.",
     "empty": "Nie ma jeszcze żadnych rekomendacji.",
     "count_one": "{{count}} rekomendacja",
     "count_few": "{{count}} rekomendacje",
@@ -95,6 +96,7 @@
     "title": "Coś poszło nie tak",
     "retry": "Spróbuj ponownie",
     "validation_error": "Zapytanie nie zostało przyjęte. Sprawdź tekst i spróbuj ponownie.",
+    "daily_limit_reached": "Wykorzystano dzisiejszy limit tej wersji testowej. Wróć jutro.",
     "llm_unavailable": "Model językowy jest teraz niedostępny. Spróbuj ponownie za chwilę.",
     "llm_invalid_output": "Model językowy zwrócił nieprzydatną odpowiedź. Spróbuj ponownie.",
     "catalog_unavailable": "Spotify jest teraz niedostępne, więc nie udało się zweryfikować piosenki. Spróbuj później.",

@@ -7,8 +7,10 @@ from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.agents.runner import RecommendationRunner
+from app.api.limits import DailyLimits
 from app.config import Settings
-from app.db.repositories import FeedbackRepository, RecommendationRepository
+from app.db.models import UsageAction
+from app.db.repositories import FeedbackRepository, RecommendationRepository, UsageRepository
 from app.errors import STTUnavailableError
 from app.observability.tracing import Tracing
 from app.stt.base import STTProvider
@@ -43,6 +45,23 @@ def get_feedback_repository(request: Request) -> FeedbackRepository:
     return FeedbackRepository(request.app.state.session_factory)
 
 
+def get_visitor_id(request: Request) -> str:
+    """The browser's anonymous id, set by the identify_visitor middleware."""
+    visitor_id: str = request.state.visitor_id
+    return visitor_id
+
+
+def get_daily_limits(request: Request) -> DailyLimits:
+    settings: Settings = request.app.state.settings
+    return DailyLimits(
+        UsageRepository(request.app.state.session_factory),
+        {
+            UsageAction.RECOMMENDATION: settings.daily_recommendation_limit,
+            UsageAction.TRANSCRIPTION: settings.daily_transcription_limit,
+        },
+    )
+
+
 def get_stt(request: Request) -> STTProvider:
     stt: STTProvider | None = request.app.state.stt
     if stt is None:
@@ -57,3 +76,5 @@ TracingDep = Annotated[Tracing, Depends(get_tracing)]
 RecommendationRepoDep = Annotated[RecommendationRepository, Depends(get_recommendation_repository)]
 FeedbackRepoDep = Annotated[FeedbackRepository, Depends(get_feedback_repository)]
 STTDep = Annotated[STTProvider, Depends(get_stt)]
+VisitorDep = Annotated[str, Depends(get_visitor_id)]
+DailyLimitsDep = Annotated[DailyLimits, Depends(get_daily_limits)]

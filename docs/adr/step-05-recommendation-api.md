@@ -1,6 +1,6 @@
 # ADR-05: Step 5 — Recommendation API and history
 
-- Status: Accepted
+- Status: Accepted (amended by [ADR-11.1](step-11.1-visitors-and-daily-limits.md))
 - Date: 2026-10-10
 - Step: 5
 

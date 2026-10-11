@@ -10,8 +10,9 @@ from typing import Annotated
 
 from fastapi import APIRouter, File, UploadFile
 
-from app.api.deps import STTDep
+from app.api.deps import DailyLimitsDep, STTDep, VisitorDep
 from app.api.transcription_schemas import TranscriptionResponse
+from app.db.models import UsageAction
 from app.errors import AudioTooLargeError, InvalidAudioError, UnsupportedAudioFormatError
 from app.stt.base import AUDIO_FORMATS, base_content_type
 
@@ -27,8 +28,13 @@ MAX_AUDIO_BYTES = 10 * 1024 * 1024
 async def create_transcription(
     audio: Annotated[UploadFile, File(description="The recording: webm, ogg, mp4 or wav.")],
     stt: STTDep,
+    visitor_id: VisitorDep,
+    limits: DailyLimitsDep,
 ) -> TranscriptionResponse:
-    """Transcribe a recording. The language is detected, not taken from the UI locale."""
+    """Transcribe a recording. The language is detected, not taken from the UI locale.
+
+    Counts towards the visitor's daily transcription limit once the recording is accepted.
+    """
     mime = base_content_type(audio.content_type)
     if mime not in AUDIO_FORMATS:
         supported = ", ".join(AUDIO_FORMATS)
@@ -42,6 +48,7 @@ async def create_transcription(
         )
     if not data:
         raise InvalidAudioError("The recording is empty.")
+    await limits.use(visitor_id, UsageAction.TRANSCRIPTION)
 
     started = time.perf_counter()
     transcript = await stt.transcribe(data, mime)

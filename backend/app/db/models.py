@@ -1,10 +1,20 @@
 """ORM models. See docs/implementation-plan.md, section 2.5."""
 
-from datetime import datetime
+from datetime import date, datetime
 from enum import StrEnum
 from typing import Any
 
-from sqlalchemy import JSON, CheckConstraint, Enum, ForeignKey, SmallInteger, String, Text
+from sqlalchemy import (
+    JSON,
+    CheckConstraint,
+    Date,
+    Enum,
+    ForeignKey,
+    Integer,
+    SmallInteger,
+    String,
+    Text,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, UTCDateTime, utc_now
@@ -20,6 +30,13 @@ class RecommendationStatus(StrEnum):
     NEEDS_CLARIFICATION = "needs_clarification"
     COMPLETED = "completed"
     FAILED = "failed"
+
+
+class UsageAction(StrEnum):
+    """Actions that count towards a visitor's daily limits."""
+
+    RECOMMENDATION = "recommendation"
+    TRANSCRIPTION = "transcription"
 
 
 def _str_enum(enum_cls: type[StrEnum], name: str) -> Enum:
@@ -42,6 +59,9 @@ class Recommendation(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utc_now, index=True)
+    # The browser that made the request (ADR-11.1); only that browser sees it in the history.
+    # Empty for requests made before visitors existed and for runs outside the API.
+    visitor_id: Mapped[str | None] = mapped_column(String(64), index=True)
     status: Mapped[RecommendationStatus] = mapped_column(
         _str_enum(RecommendationStatus, "recommendation_status"),
         default=RecommendationStatus.PENDING,
@@ -93,6 +113,19 @@ class Feedback(Base):
     synced_to_langsmith: Mapped[bool] = mapped_column(default=False)
 
     recommendation: Mapped[Recommendation] = relationship(back_populates="feedback")
+
+
+class DailyUsage(Base):
+    """How many times a visitor used a limited action on one UTC day (ADR-11.1)."""
+
+    __tablename__ = "daily_usage"
+
+    visitor_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    day: Mapped[date] = mapped_column(Date, primary_key=True)
+    action: Mapped[UsageAction] = mapped_column(
+        _str_enum(UsageAction, "usage_action"), primary_key=True
+    )
+    used: Mapped[int] = mapped_column(Integer)
 
 
 class TrackLinkCache(Base):

@@ -1,4 +1,8 @@
-"""Recommendation endpoints: start, answer the clarifying question, history, feedback."""
+"""Recommendation endpoints: start, answer the clarifying question, history, feedback.
+
+Every request belongs to the visitor (browser) that started it: the history lists only the
+visitor's own requests, and another visitor's request is answered as not found (ADR-11.1).
+"""
 
 import logging
 import uuid
@@ -7,7 +11,14 @@ from typing import Annotated
 from fastapi import APIRouter, Query, Response, status
 
 from app.agents.runner import Completed, NeedsClarification, RunOutcome
-from app.api.deps import FeedbackRepoDep, RecommendationRepoDep, RunnerDep, TracingDep
+from app.api.deps import (
+    DailyLimitsDep,
+    FeedbackRepoDep,
+    RecommendationRepoDep,
+    RunnerDep,
+    TracingDep,
+    VisitorDep,
+)
 from app.api.recommendation_schemas import (
     SCORE_VALUES,
     ClarificationRequest,
@@ -20,7 +31,8 @@ from app.api.recommendation_schemas import (
     RecommendationRequest,
     RecommendationResponse,
 )
-from app.db.models import Recommendation, RecommendationStatus
+from app.db.models import Recommendation, RecommendationStatus, UsageAction
+from app.db.repositories import RecommendationRepository
 from app.errors import ConflictError, NotFoundError
 from app.observability.tracing import Tracing, root_run_id
 
@@ -38,6 +50,16 @@ def _response(outcome: RunOutcome) -> CompletedResponse | NeedsClarificationResp
     return CompletedResponse(recommendation=outcome.recommendation)
 
 
+async def _owned(
+    repository: RecommendationRepository, request_id: str, visitor_id: str
+) -> Recommendation:
+    """The visitor's recommendation; someone else's is reported as missing, not forbidden."""
+    row = await repository.get(request_id)
+    if row is None or row.visitor_id != visitor_id:
+        raise NotFoundError("Recommendation not found.")
+    return row
+
+
 def final_run_id(row: Recommendation) -> uuid.UUID:
     """The run that produced the recommendation: the resumed one if a question was answered."""
     return root_run_id(row.id, resumed=row.clarification_answer is not None)
@@ -45,20 +67,33 @@ def final_run_id(row: Recommendation) -> uuid.UUID:
 
 @router.post("")
 async def create_recommendation(
-    body: RecommendationRequest, runner: RunnerDep
+    body: RecommendationRequest, runner: RunnerDep, visitor_id: VisitorDep, limits: DailyLimitsDep
 ) -> RecommendationResponse:
-    """Recommend one song, or return a clarifying question (answer it with /clarification)."""
+    """Recommend one song, or return a clarifying question (answer it with /clarification).
+
+    Counts towards the visitor's daily limit; answering the question does not.
+    """
+    await limits.use(visitor_id, UsageAction.RECOMMENDATION)
     outcome = await runner.start(
-        body.text, input_mode=body.input_mode, locale=body.locale, transcript=body.transcript
+        body.text,
+        input_mode=body.input_mode,
+        locale=body.locale,
+        transcript=body.transcript,
+        visitor_id=visitor_id,
     )
     return _response(outcome)
 
 
 @router.post("/{request_id}/clarification")
 async def answer_clarification(
-    request_id: str, body: ClarificationRequest, runner: RunnerDep
+    request_id: str,
+    body: ClarificationRequest,
+    runner: RunnerDep,
+    repository: RecommendationRepoDep,
+    visitor_id: VisitorDep,
 ) -> RecommendationResponse:
     """Resume a recommendation that is waiting for the answer to its clarifying question."""
+    await _owned(repository, request_id, visitor_id)
     return _response(await runner.answer(request_id, body.answer))
 
 
@@ -66,11 +101,12 @@ async def answer_clarification(
 async def list_recommendations(
     repository: RecommendationRepoDep,
     tracing: TracingDep,
+    visitor_id: VisitorDep,
     limit: Annotated[int, Query(ge=1, le=MAX_PAGE_SIZE)] = 20,
     offset: Annotated[int, Query(ge=0)] = 0,
 ) -> HistoryPage:
-    """Completed recommendations, newest first, with their feedback."""
-    rows, total = await repository.list_completed(limit=limit, offset=offset)
+    """The visitor's completed recommendations, newest first, with their feedback."""
+    rows, total = await repository.list_completed(visitor_id, limit=limit, offset=offset)
     items = [await _history_item(row, tracing) for row in rows]
     return HistoryPage(items=items, total=total, limit=limit, offset=offset)
 
@@ -115,15 +151,14 @@ async def give_feedback(
     recommendations: RecommendationRepoDep,
     feedback: FeedbackRepoDep,
     tracing: TracingDep,
+    visitor_id: VisitorDep,
 ) -> Response:
     """Rate a completed recommendation (rating again replaces the earlier rating).
 
     The rating is always stored locally; it is also sent to LangSmith as feedback on the run
     that produced the recommendation. If that fails, it is kept as not synced.
     """
-    row = await recommendations.get(request_id)
-    if row is None:
-        raise NotFoundError("Recommendation not found.")
+    row = await _owned(recommendations, request_id, visitor_id)
     if row.status is not RecommendationStatus.COMPLETED:
         raise ConflictError("Only completed recommendations can be rated.")
 

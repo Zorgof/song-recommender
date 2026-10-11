@@ -64,13 +64,13 @@ Rules:
 
 | ADR | Title | Status |
 |-----|-------|--------|
-| [ADR-05](step-05-recommendation-api.md) | Recommendation, clarification, history and feedback endpoints | Accepted |
+| [ADR-05](step-05-recommendation-api.md) | Recommendation, clarification, history and feedback endpoints | Accepted (amended by ADR-11.1) |
 
 ### Step 6 — Speech-to-text (OpenAI)
 
 | ADR | Title | Status |
 |-----|-------|--------|
-| [ADR-06](step-06-speech-to-text.md) | STTProvider, OpenAI transcription (`gpt-transcribe`), transcription endpoint | Accepted |
+| [ADR-06](step-06-speech-to-text.md) | STTProvider, OpenAI transcription (`gpt-transcribe`), transcription endpoint | Accepted (amended by ADR-11.1) |
 
 ### Step 7 — Frontend: text flow and i18n
 
@@ -101,6 +101,7 @@ Rules:
 | ADR | Title | Status |
 |-----|-------|--------|
 | [ADR-11](step-11-documentation.md) | README, architecture, configuration, tuning and troubleshooting docs, screenshots | Accepted |
+| [ADR-11.1](step-11.1-visitors-and-daily-limits.md) | Anonymous visitors, per-visitor history and daily limits | Accepted |
 
 ## Templates
 

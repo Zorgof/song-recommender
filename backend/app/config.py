@@ -37,6 +37,11 @@ class Settings(BaseSettings):
     # Used only when app_env=development; in production nginx serves the SPA on the same origin.
     cors_origins: list[str] = ["http://localhost:5173"]
 
+    # --- Daily limits per visitor (browser), reset at midnight UTC; 0 = no limit ---
+    daily_recommendation_limit: int = Field(default=10, ge=0)
+    # Higher than the recommendation limit, so a visitor can record again before submitting.
+    daily_transcription_limit: int = Field(default=20, ge=0)
+
     # --- LLM providers ---
     openai_api_key: SecretStr | None = None
     anthropic_api_key: SecretStr | None = None

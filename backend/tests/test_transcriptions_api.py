@@ -157,3 +157,16 @@ def test_transcript_is_not_logged(
     (record,) = [r for r in caplog.records if r.getMessage() == "Recording transcribed"]
     assert record.__dict__["language"] == "en"
     assert "very private words" not in caplog.text
+
+
+def test_daily_limit_stops_transcriptions(client: TestClient, app: FastAPI, stt: FakeSTT) -> None:
+    app.state.settings = app.state.settings.model_copy(update={"daily_transcription_limit": 1})
+    rejected = upload(client, content_type="text/plain")  # rejected uploads do not count
+
+    first = upload(client)
+    second = upload(client)
+
+    assert rejected.status_code == 415
+    assert first.status_code == 200, first.text
+    assert (second.status_code, second.json()["error"]["code"]) == (429, "daily_limit_reached")
+    assert len(stt.calls) == 1
