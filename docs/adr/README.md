@@ -43,7 +43,8 @@ Rules:
 
 | ADR | Title | Status |
 |-----|-------|--------|
-| [ADR-02](step-02-llm-layer-and-routing.md) | Model registry, structured calls with escalation, routing heuristics | Accepted |
+| [ADR-02](step-02-llm-layer-and-routing.md) | Model registry, structured calls with escalation, routing heuristics | Accepted (amended by ADR-02.1) |
+| [ADR-02.1](step-02.1-anthropic-structured-output.md) | Native structured output for Anthropic models | Accepted |
 
 ### Step 3 — Music catalog clients
 
@@ -94,6 +95,12 @@ Rules:
 | ADR | Title | Status |
 |-----|-------|--------|
 | [ADR-10](step-10-evals.md) | LangSmith dataset, eval target, metrics, aspect-based LLM judge, baseline | Accepted |
+
+### Step 11 — Documentation
+
+| ADR | Title | Status |
+|-----|-------|--------|
+| [ADR-11](step-11-documentation.md) | README, architecture, configuration, tuning and troubleshooting docs, screenshots | Accepted |
 
 ## Templates
 

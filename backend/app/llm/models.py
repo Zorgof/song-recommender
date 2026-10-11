@@ -181,19 +181,27 @@ class ModelRegistry:
         provider errors. Output: {"raw": AIMessage, "parsed": schema | None, "parsing_error": ...}.
         """
         config = self._tiers[tier]
-        primary = self._with_schema(self.chat_model(config.primary, tier), schema)
+        primary = self._with_schema(self.chat_model(config.primary, tier), config.primary, schema)
         if config.fallback is None:
             return primary
-        fallback = self._with_schema(self.chat_model(config.fallback, tier), schema)
+        fallback = self._with_schema(
+            self.chat_model(config.fallback, tier), config.fallback, schema
+        )
         return primary.with_fallbacks([fallback])
 
     @staticmethod
     def _with_schema(
-        model: BaseChatModel, schema: type[BaseModel]
+        model: BaseChatModel, spec: ModelSpec, schema: type[BaseModel]
     ) -> Runnable[LanguageModelInput, dict[str, Any]]:
         # include_raw: invalid output comes back as `parsing_error` instead of an exception, so
         # it can be told apart from provider errors (which trigger the fallback model).
+        kwargs: dict[str, Any] = {"include_raw": True}
+        if spec.provider is Provider.ANTHROPIC:
+            # Claude's native structured output. LangChain's default (forced tool calling) is not
+            # available on Claude Sonnet/Opus 5.5 or with thinking on; the tool call would then be
+            # optional and a missing one would fail parsing (ADR-02.1).
+            kwargs["method"] = "json_schema"
         runnable: Runnable[LanguageModelInput, dict[str, Any]] = model.with_structured_output(
-            schema, include_raw=True
+            schema, **kwargs
         )  # type: ignore[assignment]
         return runnable

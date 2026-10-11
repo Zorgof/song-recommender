@@ -1,18 +1,22 @@
 from pathlib import Path
+from typing import Any
 
 import pytest
 from langchain_anthropic import ChatAnthropic
 from langchain_core.language_models import BaseChatModel
+from langchain_core.runnables import RunnableBinding, RunnableParallel, RunnableSequence
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import ChatOpenAI
 from pydantic import SecretStr
 
+from app.agents.schemas import RouterClassification
 from app.errors import ConfigurationError
 from app.llm.models import (
     ModelOptions,
     ModelRegistry,
     ModelSpec,
     Provider,
+    Tier,
     init_model,
     parse_model_spec,
     resolve_tiers,
@@ -213,3 +217,45 @@ def test_init_model_google() -> None:
     assert model.model.endswith("gemini-test")
     assert model.google_api_key is not None
     assert model.google_api_key.get_secret_value() == "test-provider-key"
+
+
+# --- structured output per provider (ADR-02.1) ----------------------------------------------
+
+
+def _first_binding_kwargs(registry: ModelRegistry, tier: Tier) -> dict[str, Any]:
+    """Request options bound to the chat model: with include_raw, the sequence starts with a
+    RunnableParallel whose "raw" step is the model binding."""
+    runnable = registry.structured(tier, RouterClassification)
+    assert isinstance(runnable, RunnableSequence)
+    assert isinstance(runnable.first, RunnableParallel)
+    binding = runnable.first.steps__["raw"]
+    assert isinstance(binding, RunnableBinding)
+    return dict(binding.kwargs)
+
+
+@pytest.mark.parametrize("model", ["claude-sonnet-5-5", "claude-opus-5-5", "claude-haiku-5-5"])
+def test_anthropic_uses_native_structured_output(
+    tmp_path: Path, model: str, recwarn: pytest.WarningsRecorder
+) -> None:
+    settings = make_settings(
+        tmp_path,
+        llm_light=f"anthropic:{model}",
+        llm_heavy=f"anthropic:{model}",
+        llm_heavy_reasoning=True,
+        anthropic_api_key="test-anthropic-key",
+    )
+
+    for tier in ("light", "heavy"):
+        kwargs = _first_binding_kwargs(ModelRegistry(settings), tier)
+        assert kwargs["output_config"]["format"]["type"] == "json_schema"
+        assert "tool_choice" not in kwargs
+
+    # LangChain warns when it has to fall back to an unforced tool call.
+    assert not [w for w in recwarn if "forced tool calling" in str(w.message)]
+
+
+def test_openai_keeps_the_default_structured_output(tmp_path: Path) -> None:
+    kwargs = _first_binding_kwargs(ModelRegistry(make_app_settings(tmp_path)), "light")
+
+    assert "output_config" not in kwargs
+    assert "response_format" in kwargs

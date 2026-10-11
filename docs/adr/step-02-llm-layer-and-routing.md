@@ -1,6 +1,6 @@
 # ADR-02: Step 2 — LLM layer and routing primitives
 
-- Status: Accepted
+- Status: Accepted (amended by [ADR-02.1](step-02.1-anthropic-structured-output.md))
 - Date: 2026-10-07
 - Step: 2
 

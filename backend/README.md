@@ -66,6 +66,9 @@ feedback comment up to 1000.
   them and the provider keys, and refuses to start with a message listing every problem.
 - **Keys are passed explicitly** from `Settings` to each model (`api_key=`); nothing is read from
   `os.environ`, so values that only live in `.env` work.
+- **Structured output** uses the provider's native JSON-schema mode for OpenAI and Anthropic
+  (Claude's `output_config`; forced tool calls are unavailable on Sonnet/Opus 5.5, ADR-02.1) and
+  LangChain's default for Gemini. Results are always validated with Pydantic.
 - **`structured_call(registry, tier, Schema, messages)`** returns a validated `Schema` instance plus
   the tier and model actually used:
   - provider error (after the SDK's retries) → the tier's fallback model, else `LLMUnavailableError` (503);
