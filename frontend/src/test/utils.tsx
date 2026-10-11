@@ -6,7 +6,7 @@ import { MemoryRouter } from 'react-router'
 import { vi } from 'vitest'
 
 import App from '../App'
-import type { HistoryItem, Recommendation } from '../api/types'
+import type { HistoryItem, Meta, Recommendation } from '../api/types'
 
 export function renderWithProviders(ui: ReactElement, { route = '/' } = {}) {
   const queryClient = new QueryClient({
@@ -30,21 +30,51 @@ export function renderApp(route = '/') {
 export interface Call {
   method: string
   path: string
+  // Parsed JSON body.
   body: unknown
+  // Multipart body (uploads).
+  form?: FormData
 }
 
 type Handler = (call: Call) => Response | Promise<Response>
 
-/** Replace fetch; `calls` records every request (path relative to /api, parsed JSON body). */
-export function mockFetch(handler: Handler) {
+export function meta(sttEnabled = false): Meta {
+  return {
+    app: { name: 'song-recommender', version: '0.1.0', environment: 'development' },
+    llm: {
+      light: 'openai:light',
+      heavy: 'openai:heavy',
+      light_fallback: null,
+      heavy_fallback: null,
+      heavy_reasoning: false,
+    },
+    stt: {
+      enabled: sttEnabled,
+      provider: sttEnabled ? 'openai' : 'none',
+      model: sttEnabled ? 'gpt-transcribe' : null,
+    },
+    catalogs: { spotify: true, youtube: true },
+    langsmith: { enabled: false, project: null },
+    locales: ['en', 'pl'],
+  }
+}
+
+/**
+ * Replace fetch; `calls` records every request (path relative to /api, parsed body).
+ * `GET /api/meta` is answered automatically (STT off unless `sttEnabled`) and not recorded.
+ */
+export function mockFetch(handler: Handler, { sttEnabled = false } = {}) {
   const calls: Call[] = []
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = new URL(String(input), 'http://localhost')
+    const path = url.pathname.replace(/^\/api/, '') + url.search
+    if (path === '/meta') return json(meta(sttEnabled))
     const call: Call = {
       method: init?.method ?? 'GET',
-      path: url.pathname.replace(/^\/api/, '') + url.search,
+      path,
       body: typeof init?.body === 'string' ? JSON.parse(init.body) : undefined,
     }
+    if (init?.body instanceof FormData) call.form = init.body
     calls.push(call)
     return handler(call)
   })

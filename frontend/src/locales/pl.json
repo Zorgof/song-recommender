@@ -29,6 +29,28 @@
     "submit": "Dalej",
     "startOver": "Zacznij od nowa"
   },
+  "voice": {
+    "record": "Nagraj",
+    "starting": "Czekam na mikrofon…",
+    "permissionHint": "Zezwól na dostęp do mikrofonu, gdy przeglądarka zapyta.",
+    "recording": "Nagrywanie",
+    "timer": "{{elapsed}} / {{max}}",
+    "limitHint": "Mów swobodnie; nagranie zatrzyma się samo po {{max}}.",
+    "stop": "Zatrzymaj i przepisz",
+    "cancel": "Anuluj",
+    "transcribing": "Przepisuję nagranie…",
+    "reviewLabel": "Sprawdź transkrypcję",
+    "reviewHint": "Popraw źle rozpoznane fragmenty i wyślij.",
+    "detected": "Wykryty język: {{language}}",
+    "recordAgain": "Nagraj ponownie",
+    "discard": "Odrzuć",
+    "empty": "Nie usłyszeliśmy mowy. Spróbuj ponownie bliżej mikrofonu albo wpisz tekst.",
+    "denied": "Dostęp do mikrofonu jest zablokowany. Zezwól na niego w ustawieniach strony w przeglądarce albo wpisz tekst.",
+    "noMicrophone": "Nie znaleziono mikrofonu. Podłącz go albo wpisz tekst.",
+    "failed": "Nie udało się rozpocząć nagrywania. Spróbuj ponownie albo wpisz tekst.",
+    "back": "Wróć do pisania",
+    "insecure": "Nagrywanie głosu wymaga bezpiecznego połączenia: otwórz aplikację przez https:// lub http://localhost."
+  },
   "result": {
     "heading": "Twoja piosenka",
     "need": "Co usłyszeliśmy",

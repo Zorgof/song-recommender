@@ -90,3 +90,26 @@ export interface HistoryPage {
 export interface ErrorBody {
   error: { code: string; message: string; details?: unknown }
 }
+
+export interface Meta {
+  app: { name: string; version: string; environment: string }
+  llm: {
+    light: string | null
+    heavy: string | null
+    light_fallback: string | null
+    heavy_fallback: string | null
+    heavy_reasoning: boolean
+  }
+  stt: { enabled: boolean; provider: string; model: string | null }
+  catalogs: { spotify: boolean; youtube: boolean }
+  langsmith: { enabled: boolean; project: string | null }
+  locales: string[]
+}
+
+export interface Transcription {
+  // Empty when no speech was recognized.
+  text: string
+  // ISO 639-1 code of the spoken language, when the provider detects it.
+  language: string | null
+  duration_s: number | null
+}

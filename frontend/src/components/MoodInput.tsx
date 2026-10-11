@@ -1,4 +1,4 @@
-import { useId, useState, type FormEvent, type KeyboardEvent } from 'react'
+import { useId, useState, type FormEvent, type KeyboardEvent, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 // FR-6: 3-2000 characters, counted after trimming (as the backend does).
@@ -9,9 +9,23 @@ interface Props {
   value: string
   onChange: (value: string) => void
   onSubmit: (text: string) => void
+  // Defaults: the "How are you…" label and the "write in any language" hint.
+  label?: string
+  hint?: ReactNode
+  // Extra buttons next to "Find my song" (record, record again, discard).
+  actions?: ReactNode
+  autoFocus?: boolean
 }
 
-export function MoodInput({ value, onChange, onSubmit }: Props) {
+export function MoodInput({
+  value,
+  onChange,
+  onSubmit,
+  label,
+  hint,
+  actions,
+  autoFocus = false,
+}: Props) {
   const { t } = useTranslation()
   const id = useId()
   const [showTooShort, setShowTooShort] = useState(false)
@@ -37,7 +51,7 @@ export function MoodInput({ value, onChange, onSubmit }: Props) {
   return (
     <form onSubmit={submit} className="space-y-3">
       <label htmlFor={id} className="block text-lg font-semibold">
-        {t('input.label')}
+        {label ?? t('input.label')}
       </label>
       <textarea
         id={id}
@@ -50,12 +64,13 @@ export function MoodInput({ value, onChange, onSubmit }: Props) {
         placeholder={t('input.placeholder')}
         maxLength={MAX_TEXT}
         rows={5}
+        autoFocus={autoFocus}
         aria-describedby={`${id}-hint`}
         aria-invalid={showTooShort}
         className="field"
       />
       <div className="flex justify-between gap-4 text-sm text-slate-500 dark:text-slate-400">
-        <span id={`${id}-hint`}>{t('input.hint')}</span>
+        <span id={`${id}-hint`}>{hint ?? t('input.hint')}</span>
         <span aria-hidden="true">{t('input.counter', { count: value.length, max: MAX_TEXT })}</span>
       </div>
       {showTooShort && (
@@ -63,9 +78,12 @@ export function MoodInput({ value, onChange, onSubmit }: Props) {
           {t('input.tooShort', { min: MIN_TEXT })}
         </p>
       )}
-      <button type="submit" className="btn-primary">
-        {t('input.submit')}
-      </button>
+      <div className="flex flex-wrap items-center gap-3">
+        <button type="submit" className="btn-primary">
+          {t('input.submit')}
+        </button>
+        {actions}
+      </div>
     </form>
   )
 }

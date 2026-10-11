@@ -7,6 +7,22 @@ export const HISTORY_PAGE_SIZE = 20
 
 const historyKey = ['history'] as const
 
+export function useMeta() {
+  return useQuery({
+    queryKey: ['meta'],
+    queryFn: api.meta,
+    // The configuration only changes when the backend restarts.
+    staleTime: Infinity,
+  })
+}
+
+export function useTranscribe() {
+  return useMutation({
+    mutationFn: ({ audio, filename }: { audio: Blob; filename: string }) =>
+      api.transcribe(audio, filename),
+  })
+}
+
 export function useHistory(offset: number) {
   return useQuery({
     queryKey: [...historyKey, offset],

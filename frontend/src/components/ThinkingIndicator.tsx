@@ -1,6 +1,12 @@
 import { useTranslation } from 'react-i18next'
 
-export function ThinkingIndicator() {
+interface Props {
+  // Defaults: the "finding your song" texts.
+  title?: string
+  hint?: string
+}
+
+export function ThinkingIndicator({ title, hint }: Props) {
   const { t } = useTranslation()
   return (
     <div
@@ -12,8 +18,10 @@ export function ThinkingIndicator() {
         className="mt-1 size-6 shrink-0 animate-spin rounded-full border-4 border-slate-300 border-t-emerald-600"
       />
       <div>
-        <p className="font-semibold">{t('thinking.title')}</p>
-        <p className="text-sm text-slate-600 dark:text-slate-300">{t('thinking.hint')}</p>
+        <p className="font-semibold">{title ?? t('thinking.title')}</p>
+        {(hint ?? !title) && (
+          <p className="text-sm text-slate-600 dark:text-slate-300">{hint ?? t('thinking.hint')}</p>
+        )}
       </div>
     </div>
   )

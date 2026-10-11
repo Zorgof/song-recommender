@@ -1,8 +1,10 @@
 import type {
   FeedbackRequest,
   HistoryPage,
+  Meta,
   RecommendationRequest,
   RecommendationResponse,
+  Transcription,
 } from './types'
 
 const BASE = '/api'
@@ -77,6 +79,15 @@ function postJson<T>(path: string, body: unknown): Promise<T> {
 }
 
 export const api = {
+  meta: () => request<Meta>('/meta'),
+
+  /** Multipart upload; the browser sets the Content-Type with the boundary. */
+  transcribe: (audio: Blob, filename: string) => {
+    const form = new FormData()
+    form.append('audio', audio, filename)
+    return request<Transcription>('/transcriptions', { method: 'POST', body: form })
+  },
+
   recommend: (body: RecommendationRequest) =>
     postJson<RecommendationResponse>('/recommendations', body),
 

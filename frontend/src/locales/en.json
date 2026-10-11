@@ -29,6 +29,28 @@
     "submit": "Continue",
     "startOver": "Start over"
   },
+  "voice": {
+    "record": "Record",
+    "starting": "Waiting for the microphone…",
+    "permissionHint": "Allow microphone access when your browser asks.",
+    "recording": "Recording",
+    "timer": "{{elapsed}} / {{max}}",
+    "limitHint": "Speak freely; the recording stops by itself after {{max}}.",
+    "stop": "Stop and transcribe",
+    "cancel": "Cancel",
+    "transcribing": "Transcribing your recording…",
+    "reviewLabel": "Check the transcript",
+    "reviewHint": "Fix anything that was misheard, then send it.",
+    "detected": "Detected language: {{language}}",
+    "recordAgain": "Record again",
+    "discard": "Discard",
+    "empty": "We didn't catch any speech. Try again closer to the microphone, or type instead.",
+    "denied": "Microphone access is blocked. Allow it in your browser's site settings, or type instead.",
+    "noMicrophone": "No microphone was found. Connect one, or type instead.",
+    "failed": "The recording could not be started. Try again, or type instead.",
+    "back": "Back to typing",
+    "insecure": "Voice input needs a secure connection: open the app via https:// or http://localhost."
+  },
   "result": {
     "heading": "Your song",
     "need": "What we heard",
