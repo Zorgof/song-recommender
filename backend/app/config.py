@@ -54,7 +54,7 @@ class Settings(BaseSettings):
 
     # --- Speech-to-text ---
     stt_provider: SttProvider = "openai"
-    stt_model: str | None = None
+    stt_model: str = "gpt-transcribe"
 
     # --- Spotify ---
     spotify_client_id: str | None = None

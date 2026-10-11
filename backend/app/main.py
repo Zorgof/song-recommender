@@ -20,7 +20,7 @@ from app.agents.graph import build_graph
 from app.agents.prompt_loader import PromptLibrary
 from app.agents.runner import RecommendationRunner
 from app.agents.state import AgentDeps
-from app.api import recommendations, system
+from app.api import recommendations, system, transcriptions
 from app.config import Settings, get_settings
 from app.db.migrate import upgrade_to_head_async
 from app.db.repositories import RecommendationRepository
@@ -31,6 +31,7 @@ from app.logging_config import configure_logging
 from app.music.cache import TrackLinkCacheRepository
 from app.music.service import build_music_catalog
 from app.observability.tracing import Tracing
+from app.stt.factory import build_stt_provider
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +59,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         catalog = build_music_catalog(settings, http, TrackLinkCacheRepository(session_factory))
         app.state.catalog = catalog
 
+        stt = build_stt_provider(settings)
+        if stt is not None:
+            stack.push_async_callback(stt.aclose)
+        app.state.stt = stt
+
         checkpointer = await stack.enter_async_context(
             AsyncSqliteSaver.from_conn_string(str(settings.checkpoints_path))
         )
@@ -81,6 +87,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
                 "environment": settings.app_env,
                 "database": str(settings.database_path),
                 "langsmith": tracing.enabled,
+                "stt": stt.name if stt is not None else None,
             },
         )
         yield
@@ -144,4 +151,5 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     register_error_handlers(app)
     app.include_router(system.router, prefix=API_PREFIX)
     app.include_router(recommendations.router, prefix=API_PREFIX)
+    app.include_router(transcriptions.router, prefix=API_PREFIX)
     return app

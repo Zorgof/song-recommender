@@ -30,6 +30,7 @@ app/
   api/               routers, dependencies and response schemas
   llm/               model registry (tiers), structured calls with escalation, routing heuristics
   music/             Spotify and YouTube clients, fuzzy matching, track link cache
+  stt/               speech-to-text: STTProvider interface, OpenAI implementation, factory
   agents/            LangGraph graph, nodes, schemas, versioned prompts, RecommendationRunner
   observability/     LangSmith client, root runs, trace URLs
   db/                SQLAlchemy models, async engine, Alembic migrations
@@ -42,7 +43,8 @@ tests/
 |----------|-------------|
 | `GET /api/health` | `{"status": "ok", "database": "ok"}`, or HTTP 503 when the database is unreachable |
 | `GET /api/meta` | Public configuration for the frontend (models per tier, STT/LangSmith/catalog flags, locales); never contains secrets |
-| `POST /api/recommendations` | `{text, input_mode, locale}` → `{status: "completed", recommendation}` or `{status: "needs_clarification", request_id, question}` |
+| `POST /api/transcriptions` | multipart field `audio` (webm/ogg/mp4/wav, ≤ 10 MB) → `{text, language, duration_s}`; `503 stt_unavailable` when STT is disabled |
+| `POST /api/recommendations` | `{text, input_mode, locale, transcript?}` → `{status: "completed", recommendation}` or `{status: "needs_clarification", request_id, question}`. `transcript` (voice only) is the raw transcript before the user's edits; it goes to the trace |
 | `POST /api/recommendations/{id}/clarification` | `{answer}` → resumes the paused run; `404` unknown id, `409 conflict` if not waiting for an answer |
 | `GET /api/recommendations?limit=20&offset=0` | Completed recommendations, newest first, with their feedback and trace link: `{items, total, limit, offset}` |
 | `POST /api/recommendations/{id}/feedback` | `{score: "up" \| "down", comment?}` → `204`; one rating per recommendation (rating again replaces it); also sent to LangSmith |
@@ -51,7 +53,8 @@ tests/
 Every response carries an `X-Request-ID` header, generated or propagated from the request.
 Errors have the shape `{"error": {"code", "message"}}`; codes: `validation_error` (422),
 `not_found` (404), `conflict` (409), `llm_unavailable` (503), `llm_invalid_output` (502),
-`catalog_unavailable` (503), `stt_unavailable` (503), `internal_error` (500).
+`catalog_unavailable` (503), `stt_unavailable` (503), `audio_too_large` (413),
+`unsupported_audio_format` (415), `invalid_audio` (422), `internal_error` (500).
 Text limits (FR-6, counted after trimming): description 3–2000 characters, answer 1–2000,
 feedback comment up to 1000.
 
@@ -92,6 +95,26 @@ feedback comment up to 1000.
   punctuation, "Remastered"/"Live"/"feat." markers, a leading "The") and compared with rapidfuzz;
   both the title and the artist must score at least 85. `normalized_key(artist, title)` is the
   cache key (`"artist|title"`).
+
+## Speech-to-text (`app/stt/`)
+
+- **`STTProvider`** (`app.state.stt`): `transcribe(audio, mime) -> Transcript(text, language,
+  duration_s)`. It is `None` when STT is disabled (`STT_PROVIDER=none`, or no `OPENAI_API_KEY`);
+  `/api/meta` then reports `stt.enabled=false` and the endpoint answers `503 stt_unavailable`.
+- **`OpenAISTT`** calls `/v1/audio/transcriptions` with `STT_MODEL` (default `gpt-transcribe`),
+  `OPENAI_API_KEY`, `LLM_TIMEOUT_SECONDS` and `LLM_MAX_RETRIES`. No language hint is sent: the
+  language is detected. `language` is filled by models that report it (`gpt-transcribe`),
+  `duration_s` by models billed per audio minute; otherwise they are `null`.
+- Audio OpenAI cannot decode (corrupted, too short) → `422 invalid_audio`; any other provider
+  error (key, model id, rate limit, outage) → `503 stt_unavailable`, logged without the message.
+- The audio is not stored, logged or traced; the transcript is not logged either (NFR-5).
+
+Manual check with a real key (run the backend first):
+
+```bash
+curl -s -F "audio=@sample-pl.webm;type=audio/webm" http://localhost:8000/api/transcriptions
+# {"text":"Miałem dziś ciężki dzień…","language":"pl","duration_s":6.1}
+```
 
 ## Agent graph (`app/agents/`)
 

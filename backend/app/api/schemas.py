@@ -29,6 +29,8 @@ class LLMInfo(BaseModel):
 class STTInfo(BaseModel):
     enabled: bool
     provider: str
+    # The transcription model; None when STT is disabled.
+    model: str | None
 
 
 class CatalogsInfo(BaseModel):

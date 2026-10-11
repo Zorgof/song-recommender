@@ -47,7 +47,11 @@ async def meta(settings: SettingsDep) -> MetaResponse:
             heavy_fallback=settings.llm_heavy_fallback,
             heavy_reasoning=settings.llm_heavy_reasoning,
         ),
-        stt=STTInfo(enabled=settings.stt_enabled, provider=settings.stt_provider),
+        stt=STTInfo(
+            enabled=settings.stt_enabled,
+            provider=settings.stt_provider,
+            model=settings.stt_model if settings.stt_enabled else None,
+        ),
         catalogs=CatalogsInfo(
             spotify=settings.spotify_configured, youtube=settings.youtube_configured
         ),

@@ -67,6 +67,26 @@ class STTUnavailableError(AppError):
     default_message = "Speech-to-text is unavailable."
 
 
+class AudioTooLargeError(AppError):
+    code = "audio_too_large"
+    status_code = status.HTTP_413_CONTENT_TOO_LARGE
+    default_message = "The recording is too large."
+
+
+class UnsupportedAudioFormatError(AppError):
+    code = "unsupported_audio_format"
+    status_code = status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
+    default_message = "The recording format is not supported."
+
+
+class InvalidAudioError(AppError):
+    """The recording is empty, or the STT provider could not decode it."""
+
+    code = "invalid_audio"
+    status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
+    default_message = "The recording could not be processed."
+
+
 # Status codes raised by the framework itself (unknown route, wrong method, ...).
 _HTTP_STATUS_CODES: dict[int, str] = {
     status.HTTP_404_NOT_FOUND: "not_found",

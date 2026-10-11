@@ -65,6 +65,12 @@ Rules:
 |-----|-------|--------|
 | [ADR-05](step-05-recommendation-api.md) | Recommendation, clarification, history and feedback endpoints | Accepted |
 
+### Step 6 — Speech-to-text (OpenAI)
+
+| ADR | Title | Status |
+|-----|-------|--------|
+| [ADR-06](step-06-speech-to-text.md) | STTProvider, OpenAI transcription (`gpt-transcribe`), transcription endpoint | Accepted |
+
 ## Templates
 
 Step ADR:

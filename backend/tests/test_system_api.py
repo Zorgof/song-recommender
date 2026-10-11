@@ -73,7 +73,7 @@ def test_meta_with_minimal_configuration(client: TestClient) -> None:
             "heavy_fallback": None,
             "heavy_reasoning": False,
         },
-        "stt": {"enabled": True, "provider": "openai"},
+        "stt": {"enabled": True, "provider": "openai", "model": "gpt-transcribe"},
         "catalogs": {"spotify": False, "youtube": False},
         "langsmith": {"enabled": False, "project": None},
         "locales": ["en", "pl"],
@@ -101,7 +101,7 @@ def test_meta_reports_configuration_without_leaking_secrets(tmp_path: Path) -> N
 
     body = response.json()
     assert body["llm"]["light"] == "openai:light-model"
-    assert body["stt"] == {"enabled": True, "provider": "openai"}
+    assert body["stt"] == {"enabled": True, "provider": "openai", "model": "gpt-transcribe"}
     assert body["catalogs"] == {"spotify": True, "youtube": True}
     assert body["langsmith"] == {"enabled": True, "project": "song-recommender"}
     for secret in secrets.values():

@@ -156,18 +156,18 @@ LangGraph checkpoints are stored in a separate `checkpoints.db` (`AsyncSqliteSav
 |---------------|---------------|----------|
 | `GET /api/health` | — | `{status}` |
 | `GET /api/meta` | — | Configured tiers and models, STT enabled, LangSmith enabled (no secrets) |
-| `POST /api/transcriptions` | multipart `audio` (webm/ogg/mp4/wav, ≤ 10 MB) | `{text, language, duration_s}` |
-| `POST /api/recommendations` | `{text, input_mode, locale}` | `{status: "completed", recommendation}` **or** `{status: "needs_clarification", request_id, question}` |
+| `POST /api/transcriptions` | multipart `audio` (webm/ogg/mp4/wav, ≤ 10 MB) | `{text, language, duration_s}`; `language` and `duration_s` may be `null` (ADR-06) |
+| `POST /api/recommendations` | `{text, input_mode, locale, transcript?}` (`transcript`: raw voice transcript for the trace, ADR-06) | `{status: "completed", recommendation}` **or** `{status: "needs_clarification", request_id, question}` |
 | `POST /api/recommendations/{id}/clarification` | `{answer}` | `{status: "completed", recommendation}` |
 | `POST /api/recommendations/{id}/feedback` | `{score: "up" \| "down", comment?}` | `204` |
 | `GET /api/recommendations` | `?limit=20&offset=0` | History list |
 
-Errors use one shape: `{error: {code, message}}`. The frontend maps `code` to a localized message. Codes: `validation_error`, `llm_unavailable`, `llm_invalid_output` (ADR-02), `catalog_unavailable`, `stt_unavailable`, `not_found`, `conflict` (ADR-04, ADR-05), `internal_error`.
+Errors use one shape: `{error: {code, message}}`. The frontend maps `code` to a localized message. Codes: `validation_error`, `llm_unavailable`, `llm_invalid_output` (ADR-02), `catalog_unavailable`, `stt_unavailable`, `not_found`, `conflict` (ADR-04, ADR-05), `audio_too_large`, `unsupported_audio_format`, `invalid_audio` (ADR-06), `internal_error`.
 
 ### 2.7 Speech-to-text
 
 - Backend interface: `STTProvider.transcribe(audio: bytes, mime: str) -> Transcript(text, language, duration_s)`.
-- MVP implementation: `OpenAISTT`, using the OpenAI audio transcription endpoint and the shared `OPENAI_API_KEY`. The model is set with `STT_MODEL` and checked in step 6. The language is auto-detected; no hint is passed, because the user may speak Polish with the UI in English.
+- MVP implementation: `OpenAISTT`, using the OpenAI audio transcription endpoint and the shared `OPENAI_API_KEY`. The model is set with `STT_MODEL`; the default is `gpt-transcribe` (checked in step 6, ADR-06). The language is auto-detected; no hint is passed, because the user may speak Polish with the UI in English.
 - `STT_PROVIDER=openai|none`. With `none`, `/api/meta` reports STT as disabled and the UI hides the microphone.
 - Adding local Whisper later is one new class plus one optional Compose service.
 

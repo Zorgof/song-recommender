@@ -13,6 +13,7 @@ def test_defaults(tmp_path: Path) -> None:
     assert settings.app_env == "development"
     assert settings.llm_light is None
     assert settings.stt_provider == "openai"
+    assert settings.stt_model == "gpt-transcribe"
     assert settings.spotify_market == "PL"
     assert settings.langsmith_endpoint == "https://api.smith.langchain.com"
     assert settings.langsmith_workspace_id is None

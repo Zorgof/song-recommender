@@ -48,7 +48,9 @@ async def create_recommendation(
     body: RecommendationRequest, runner: RunnerDep
 ) -> RecommendationResponse:
     """Recommend one song, or return a clarifying question (answer it with /clarification)."""
-    outcome = await runner.start(body.text, input_mode=body.input_mode, locale=body.locale)
+    outcome = await runner.start(
+        body.text, input_mode=body.input_mode, locale=body.locale, transcript=body.transcript
+    )
     return _response(outcome)
 
 

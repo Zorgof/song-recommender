@@ -1,9 +1,9 @@
 """Request and response schemas of the recommendation endpoints."""
 
 from datetime import datetime
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
 from app.agents.schemas import Locale, Recommendation
 from app.db.models import InputMode
@@ -12,6 +12,8 @@ from app.db.models import InputMode
 DescriptionText = Annotated[
     str, StringConstraints(strip_whitespace=True, min_length=3, max_length=2000)
 ]
+# The raw transcript of a voice recording (at most 90 s of speech).
+TranscriptText = Annotated[str, StringConstraints(strip_whitespace=True, max_length=5000)]
 AnswerText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2000)]
 CommentText = Annotated[str, StringConstraints(strip_whitespace=True, max_length=1000)]
 Score = Literal["up", "down"]
@@ -25,6 +27,15 @@ class RecommendationRequest(BaseModel):
     text: DescriptionText
     input_mode: InputMode = InputMode.TEXT
     locale: Locale
+    # Voice input only: the transcript as returned by /api/transcriptions, before the user's
+    # edits. It is recorded in the trace next to the submitted `text` (FR-40).
+    transcript: TranscriptText | None = None
+
+    @model_validator(mode="after")
+    def _transcript_only_for_voice(self) -> Self:
+        if self.transcript is not None and self.input_mode != InputMode.VOICE:
+            raise ValueError("transcript is only allowed with input_mode 'voice'")
+        return self
 
 
 class ClarificationRequest(BaseModel):

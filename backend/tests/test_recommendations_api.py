@@ -11,7 +11,13 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select
 
 from app.db.models import Feedback, Recommendation, RecommendationStatus
-from app.observability.tracing import FEEDBACK_KEY, Tracing, feedback_id, root_run_id
+from app.observability.tracing import (
+    FEEDBACK_KEY,
+    ROOT_RUN_NAME,
+    Tracing,
+    feedback_id,
+    root_run_id,
+)
 from tests.agent_fakes import (
     FakeCatalog,
     Harness,
@@ -162,8 +168,19 @@ def test_text_is_trimmed_before_it_is_used(
         {"text": SIMPLE_EN},
         {"text": SIMPLE_EN, "locale": "en", "input_mode": "telepathy"},
         {"text": SIMPLE_EN, "locale": "en", "unexpected": True},
+        {"text": SIMPLE_EN, "locale": "en", "transcript": SIMPLE_EN},
+        {"text": SIMPLE_EN, "locale": "en", "input_mode": "voice", "transcript": "x" * 5001},
     ],
-    ids=["too-short", "too-long", "bad-locale", "no-locale", "bad-mode", "extra-field"],
+    ids=[
+        "too-short",
+        "too-long",
+        "bad-locale",
+        "no-locale",
+        "bad-mode",
+        "extra-field",
+        "transcript-without-voice",
+        "transcript-too-long",
+    ],
 )
 def test_invalid_requests(api: tuple[TestClient, UseHarness], payload: dict[str, Any]) -> None:
     client, use = api
@@ -174,6 +191,27 @@ def test_invalid_requests(api: tuple[TestClient, UseHarness], payload: dict[str,
     assert response.status_code == 422
     assert response.json()["error"]["code"] == "validation_error"
     assert harness.light.calls == []
+
+
+def test_voice_request_records_the_raw_transcript(
+    api: tuple[TestClient, UseHarness], app: FastAPI
+) -> None:
+    client, use = api
+    langsmith = RecordingClient()
+    use(tracing=Tracing("test-project", langsmith))
+    edited = SIMPLE_EN + " Something instrumental."
+
+    response = client.post(
+        "/api/recommendations",
+        json={"text": edited, "input_mode": "voice", "locale": "en", "transcript": SIMPLE_EN},
+    )
+
+    assert response.status_code == 200, response.text
+    request_id = response.json()["recommendation"]["request_id"]
+    assert db_row(app, request_id).input_text == edited
+    (root,) = langsmith.runs_named(ROOT_RUN_NAME)
+    assert root["inputs"]["transcript"] == SIMPLE_EN
+    assert "voice" in root["tags"]
 
 
 def test_llm_failure_returns_the_error_shape(
