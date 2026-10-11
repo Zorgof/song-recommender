@@ -162,7 +162,7 @@ LangGraph checkpoints are stored in a separate `checkpoints.db` (`AsyncSqliteSav
 | `POST /api/recommendations/{id}/feedback` | `{score: "up" \| "down", comment?}` | `204` |
 | `GET /api/recommendations` | `?limit=20&offset=0` | History list |
 
-Errors use one shape: `{error: {code, message}}`. The frontend maps `code` to a localized message. Codes: `validation_error`, `llm_unavailable`, `llm_invalid_output` (ADR-02), `catalog_unavailable`, `stt_unavailable`, `not_found`, `conflict` (ADR-04, ADR-05), `audio_too_large`, `unsupported_audio_format`, `invalid_audio` (ADR-06), `internal_error`. The frontend adds `network_error` when the backend cannot be reached (ADR-07).
+Errors use one shape: `{error: {code, message}}`. The frontend maps `code` to a localized message. Codes: `validation_error`, `llm_unavailable`, `llm_invalid_output` (ADR-02), `catalog_unavailable`, `stt_unavailable`, `not_found`, `conflict` (ADR-04, ADR-05), `audio_too_large`, `unsupported_audio_format`, `invalid_audio` (ADR-06), `internal_error`. The frontend adds `network_error` when the backend cannot be reached (ADR-07). nginx answers in the same shape when it rejects an upload over 11 MB (`audio_too_large`) or cannot reach the backend (`network_error`, ADR-09).
 
 ### 2.7 Speech-to-text
 

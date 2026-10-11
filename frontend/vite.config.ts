@@ -6,9 +6,10 @@ import { defineConfig } from 'vitest/config'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
-    // In development the FastAPI backend runs on :8000; in Docker nginx does this proxying.
+    // In development the FastAPI backend runs on :8000 (or the `backend` service in
+    // docker-compose.dev.yml); in production nginx does this proxying.
     proxy: {
-      '/api': 'http://localhost:8000',
+      '/api': process.env.API_PROXY_TARGET ?? 'http://localhost:8000',
     },
   },
   test: {

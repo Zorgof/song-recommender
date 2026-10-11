@@ -1,0 +1,10 @@
+# Only pyproject.toml, uv.lock, alembic.ini and app/ are used by the image.
+.venv/
+data/
+tests/
+**/__pycache__/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+*.db
+.env

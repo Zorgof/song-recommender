@@ -11,6 +11,7 @@ from app.config import Settings
 from app.db.base import Base
 from app.db.migrate import upgrade_to_head
 from app.db.models import Feedback, InputMode, Recommendation, RecommendationStatus
+from app.errors import ConfigurationError
 
 SessionFactory = async_sessionmaker[AsyncSession]
 
@@ -34,6 +35,23 @@ def test_migrations_match_models(settings: Settings) -> None:
     engine.dispose()
 
     assert diff == []
+
+
+def test_migrations_create_the_data_directory(settings: Settings) -> None:
+    upgrade_to_head(settings.database_path)
+
+    assert settings.database_path.is_file()
+
+
+def test_unwritable_data_directory_fails_with_a_clear_message(settings: Settings) -> None:
+    data_dir = settings.database_path.parent
+    data_dir.mkdir(parents=True)
+    data_dir.chmod(0o500)
+    try:
+        with pytest.raises(ConfigurationError, match=r"not writable by uid \d+.*chown"):
+            upgrade_to_head(settings.database_path)
+    finally:
+        data_dir.chmod(0o700)
 
 
 async def test_defaults_on_insert(session_factory: SessionFactory) -> None:

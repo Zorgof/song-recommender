@@ -1,0 +1,49 @@
+# Local deployment: `cp .env.example .env`, fill in the keys, then `docker compose up --build`.
+# The app is served at http://localhost:${APP_PORT:-8080}.
+name: song-recommender
+
+services:
+  backend:
+    build: ./backend
+    env_file: .env
+    environment:
+      # These win over the values in .env, which are meant for running without Docker.
+      APP_ENV: production
+      DATA_DIR: /data
+    volumes:
+      # app.db and checkpoints.db; kept on the host, so history survives restarts and rebuilds.
+      # ./data is part of the repository (empty). If it is missing, Docker Engine on Linux refuses to
+      # start instead of creating it owned by root, which the non-root backend (uid 1000) could not
+      # write to. Docker Desktop creates it anyway; the backend then stops with a message that
+      # explains the fix (`sudo chown 1000:1000 data`).
+      - type: bind
+        source: ./data
+        target: /data
+        bind:
+          create_host_path: false
+    healthcheck:
+      # The slim image has no curl.
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "${APP_PORT:-8080}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped

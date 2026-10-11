@@ -54,6 +54,32 @@ npm run lint            # oxlint
 npm run format          # prettier --write
 ```
 
+### Development in Docker
+
+`docker-compose.dev.yml` runs the same two services with hot reload, so neither uv nor Node is
+needed on the host:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+# or: export COMPOSE_FILE=docker-compose.yml:docker-compose.dev.yml, then plain `docker compose …`
+```
+
+| Service | URL | What changes from docker-compose.yml |
+|---------|-----|-------------------------------------|
+| frontend | http://localhost:5173 | Vite dev server (`dev` stage of `frontend/Dockerfile`, image `song-recommender-frontend-dev`); `./frontend` is bind-mounted, `node_modules` stays in the container; `/api` is proxied to `backend:8000` via `API_PROXY_TARGET` |
+| backend | http://localhost:8000/api/docs | `uvicorn --reload` watching the bind-mounted `./backend/app`; `APP_ENV=development` (readable logs) |
+
+- Both use `./data`, like the production setup.
+- Rebuild (`--build`) after changing dependencies (`uv.lock`, `package-lock.json`).
+- Port 8080 (nginx) is not used in this mode.
+
+### Docker images
+
+| Image | Base | Notes |
+|-------|------|-------|
+| `song-recommender-backend` | `python:3.14.8-slim` | dependencies installed by uv 0.12.23 from `uv.lock` (no dev tools); runs as `app` (uid/gid 1000, build args `APP_UID`/`APP_GID`); one uvicorn worker on port 8000 |
+| `song-recommender-frontend` | `node:24.21.0-alpine` build → `nginx:1.30-alpine` | serves `dist/` and proxies `/api` (`frontend/nginx.conf`) |
+
 ## EditorConfig (`.editorconfig`)
 
 [EditorConfig](https://editorconfig.org) is a small, editor-independent file format that tells

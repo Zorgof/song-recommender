@@ -222,7 +222,11 @@ __marimo__/
 #notes
 initial-projects-notes.md
 # Song Recommender
-# SQLite databases and other runtime data
-data/
+# SQLite databases and other runtime data: /data (Docker) and backend/data (DATA_DIR=./data when
+# the backend runs from backend/). The root data/ directory itself is kept (empty), so Docker
+# bind-mounts a directory owned by the user instead of creating one as root.
+/data/*
+!/data/.gitkeep
+/backend/data/
 # Node.js
 node_modules/

@@ -1,0 +1,33 @@
+# Development with hot reload, on top of docker-compose.yml:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+# Frontend (Vite) at http://localhost:5173, backend API at http://localhost:8000/api/docs.
+# Source directories are bind-mounted: edits on the host reload both servers.
+
+services:
+  backend:
+    environment:
+      APP_ENV: development
+    command:
+      ["uvicorn", "app.main:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000",
+       "--reload", "--reload-dir", "/app/app"]
+    volumes:
+      - ./backend/app:/app/app
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build:
+      target: dev
+    # A separate tag, so this image does not replace the production (nginx) one.
+    image: song-recommender-frontend-dev
+    environment:
+      # vite.config.ts proxies /api here instead of localhost:8000.
+      API_PROXY_TARGET: http://backend:8000
+    volumes:
+      - ./frontend:/app
+      # Keep the image's node_modules (installed for Linux), not the host's.
+      - /app/node_modules
+    ports: !override
+      - "5173:5173"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:5173/"]

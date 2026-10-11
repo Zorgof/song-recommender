@@ -83,6 +83,12 @@ Rules:
 |-----|-------|--------|
 | [ADR-08](step-08-frontend-voice-flow.md) | Voice recording, transcript review, STT-aware microphone | Accepted |
 
+### Step 9 — Docker
+
+| ADR | Title | Status |
+|-----|-------|--------|
+| [ADR-09](step-09-docker.md) | Docker images, nginx, Compose (prod + dev), data volume ownership | Accepted |
+
 ## Templates
 
 Step ADR:
