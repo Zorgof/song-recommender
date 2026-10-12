@@ -130,9 +130,8 @@ sets `production`, so `/api/docs` and `/api/openapi.json` answer `404 not_found`
   `cloudflared` in Quick Tunnel mode risked it being read as a set, empty flag; the variable
   is only in the commented named-tunnel lines.
 - **Validating the nginx and Compose changes.** Docker Desktop was not running, and its WSL
-  integration was off, during this step, so `nginx -t` and a container run were not possible
-  here. Both files were checked by reading them and YAML parsing; the commands to run are under
-  Verification.
+  integration was off, while the changes were made; both checks below were run once Docker was
+  available and passed.
 
 ## Consequences
 
@@ -167,7 +166,7 @@ New tests: `test_openapi_docs_are_hidden_in_production`; `test_spend_limit_is_bu
 `test_daily_total_limit_stops_transcriptions_of_all_visitors`; frontend tests for the privacy
 note, the three new messages and when "Try again" is offered.
 
-To run with Docker Desktop started (not run in this step):
+With Docker Desktop started (both passed: `syntax is ok`, `test is successful`; config valid):
 
 ```bash
 docker run --rm -v "$PWD/frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro" \
