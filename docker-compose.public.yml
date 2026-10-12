@@ -1,8 +1,10 @@
 # Public deployment through a Cloudflare Tunnel (ADR-11.2): an HTTPS address for the app with no
 # open port, no router setup and no certificate to manage.
 #
-#   docker compose -f docker-compose.yml -f docker-compose.public.yml up --build -d
-#   docker compose -f docker-compose.yml -f docker-compose.public.yml logs tunnel | grep trycloudflare
+#   scripts/public.sh start    (or: start | stop | url | down; see docs/deployment.md)
+#
+# which runs `docker compose -f docker-compose.yml -f docker-compose.public.yml up --build -d`
+# and prints the address from the tunnel's logs.
 #
 # As shipped this is a Cloudflare Quick Tunnel: no account needed, and a new random
 # https://<words>.trycloudflare.com address on every start of the tunnel container. For a fixed
@@ -10,8 +12,8 @@
 # -> service http://frontend:80) and switch to the named-tunnel lines below. See
 # docs/deployment.md.
 #
-# Kill switch: `docker compose -f docker-compose.yml -f docker-compose.public.yml stop tunnel`
-# takes the app off the internet in seconds; the app and its data keep running locally.
+# Kill switch: `scripts/public.sh stop` (= `… stop tunnel`) takes the app off the internet in
+# seconds; the app and its data keep running locally.
 
 services:
   tunnel:

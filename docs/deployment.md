@@ -35,17 +35,30 @@ Prerequisites: Docker Desktop running, with *Settings → Resources → WSL inte
 your WSL distribution (`docker info` works in WSL).
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.public.yml up --build -d
-docker compose -f docker-compose.yml -f docker-compose.public.yml logs tunnel | grep trycloudflare
+scripts/public.sh start   # build, start, wait for the tunnel, print the public address
+scripts/public.sh url     # print the address again
+scripts/public.sh stop    # kill switch: off the internet, still running locally
+scripts/public.sh down    # stop everything; ./data is kept
 ```
 
-The second command prints `https://<words>.trycloudflare.com`; share that address. No
-Cloudflare account is needed. Limits of a Quick Tunnel: no uptime guarantee, a new address every
+`start` prints `https://<words>.trycloudflare.com` once the address answers; share it. No
+Cloudflare account is needed. The address cannot be chosen: it is random, and a new one comes
+with every start of the tunnel container (`start` after `stop`, a reboot, a Docker restart);
+`start` while the tunnel runs keeps it. A chosen name needs a named tunnel on your own domain
+(Stage 2).
+
+Without the script, the same is `docker compose -f docker-compose.yml -f
+docker-compose.public.yml up --build -d`, then `… logs tunnel | grep -o
+'https://[a-z0-9-]*\.trycloudflare\.com'` a few seconds later (the address is logged about 5 s
+after the tunnel starts). Limits of a Quick Tunnel: no uptime guarantee, a new address every
 time the `tunnel` container starts, at most 200 requests in flight. Keep the PC awake (Windows
 power settings) and Docker Desktop running.
 
 Tip: `export COMPOSE_FILE=docker-compose.yml:docker-compose.public.yml` lets you type plain
 `docker compose …` in that shell.
+
+`scripts/public.sh` reads the Quick Tunnel address from the logs; with a named tunnel (Stage 2)
+`start` reports that it found none, and the address is your public hostname.
 
 Check before inviting testers, on a phone over mobile data (not your Wi-Fi):
 
@@ -80,8 +93,9 @@ The same files work on a small VPS (Docker Engine + Compose plugin; `mkdir -p da
 
 Fastest first:
 
-- `docker compose -f docker-compose.yml -f docker-compose.public.yml stop tunnel`: the app is
-  off the internet in seconds; it keeps running locally with its data.
+- `scripts/public.sh stop` (= `docker compose -f docker-compose.yml -f docker-compose.public.yml
+  stop tunnel`): the app is off the internet in seconds; it keeps running locally with its
+  data. Back online with `scripts/public.sh start`, under a new address.
 - A leaked key: revoke it in the OpenAI project; the app then answers with an error.
 - Transcription costs spike: `STT_PROVIDER=none` and `up -d` removes only the microphone.
 

@@ -1,6 +1,6 @@
 # ADR-11.2: Step 11 — Public deployment hardening and Cloudflare Tunnel
 
-- Status: Accepted
+- Status: Accepted (amended by [ADR-11.3](step-11.3-dark-theme-and-release-script.md))
 - Date: 2026-10-12
 - Step: 11 (additional ADR #2)
 - Amends: [ADR-09](step-09-docker.md) (the app port is bound to `127.0.0.1`; nginx gets rate

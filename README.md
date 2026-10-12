@@ -79,8 +79,8 @@ The first build takes a few minutes. Open **http://localhost:8080**.
   After pulling new code, run `docker compose up --build -d` again.
 - Port 8080 taken? Set `APP_PORT=8081` in `.env`. The port is bound to `127.0.0.1`, so only this
   machine can open it.
-- To share the app with testers over HTTPS (Cloudflare Tunnel, limits, cost controls), see
-  [docs/deployment.md](docs/deployment.md).
+- To share the app with testers over HTTPS: `scripts/public.sh start` prints the public address,
+  `scripts/public.sh stop` takes it offline. See [docs/deployment.md](docs/deployment.md).
 
 If something does not work, see [docs/troubleshooting.md](docs/troubleshooting.md).
 

@@ -1,6 +1,6 @@
 # ADR-07: Step 7 — Frontend: text flow and i18n
 
-- Status: Accepted
+- Status: Accepted (amended by [ADR-11.3](step-11.3-dark-theme-and-release-script.md))
 - Date: 2026-10-11
 - Step: 7
 

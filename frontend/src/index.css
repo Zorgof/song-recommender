@@ -1,5 +1,9 @@
 @import 'tailwindcss';
 
+/* `dark:` utilities follow the `dark` class on <html> (set in index.html, always on) instead of
+   the system's prefers-color-scheme: the app is always dark (ADR-11.3). */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
   :root {
     font-family:
@@ -9,7 +13,8 @@
       Roboto,
       sans-serif;
     line-height: 1.5;
-    color-scheme: light dark;
+    /* Native controls and scrollbars in dark too. */
+    color-scheme: dark;
   }
 }
 

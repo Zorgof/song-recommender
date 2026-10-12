@@ -76,7 +76,7 @@ Rules:
 
 | ADR | Title | Status |
 |-----|-------|--------|
-| [ADR-07](step-07-frontend-text-flow-and-i18n.md) | React app: text flow, result card, feedback, history, PL/EN i18n | Accepted |
+| [ADR-07](step-07-frontend-text-flow-and-i18n.md) | React app: text flow, result card, feedback, history, PL/EN i18n | Accepted (amended by ADR-11.3) |
 
 ### Step 8 — Frontend: voice flow
 
@@ -102,7 +102,8 @@ Rules:
 |-----|-------|--------|
 | [ADR-11](step-11-documentation.md) | README, architecture, configuration, tuning and troubleshooting docs, screenshots | Accepted |
 | [ADR-11.1](step-11.1-visitors-and-daily-limits.md) | Anonymous visitors, per-visitor history and daily limits | Accepted (amended by ADR-11.2) |
-| [ADR-11.2](step-11.2-public-deployment-hardening.md) | Public deployment hardening and Cloudflare Tunnel | Accepted |
+| [ADR-11.2](step-11.2-public-deployment-hardening.md) | Public deployment hardening and Cloudflare Tunnel | Accepted (amended by ADR-11.3) |
+| [ADR-11.3](step-11.3-dark-theme-and-release-script.md) | Always-dark theme and the public release script | Accepted |
 
 ## Templates
 
