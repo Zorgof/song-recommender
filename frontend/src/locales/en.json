@@ -1,7 +1,8 @@
 {
   "app": {
     "title": "Song Recommender",
-    "tagline": "Tell us how you feel and how your day went — get one song that fits."
+    "tagline": "Tell us how you feel and how your day went — get one song that fits.",
+    "privacy": "Your descriptions and voice recordings are sent to OpenAI (USA) for processing; descriptions also go to LangSmith (USA) and are stored on this server. Please don't include personal data."
   },
   "nav": {
     "label": "Main",
@@ -95,6 +96,9 @@
     "retry": "Try again",
     "validation_error": "The request was not accepted. Check the text and try again.",
     "daily_limit_reached": "You have used today's limit for this test version. Please come back tomorrow.",
+    "daily_capacity_reached": "This test version has reached today's limit for all visitors. Please come back tomorrow.",
+    "budget_exhausted": "The budget of this test version is used up. Thank you for testing!",
+    "rate_limited": "Too many requests in a short time. Please wait a minute and try again.",
     "llm_unavailable": "The language model is unavailable right now. Please try again in a moment.",
     "llm_invalid_output": "The language model returned an unusable answer. Please try again.",
     "catalog_unavailable": "Spotify is unavailable right now, so the song could not be verified. Please try again later.",

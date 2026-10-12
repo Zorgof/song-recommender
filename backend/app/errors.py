@@ -51,6 +51,23 @@ class DailyLimitReachedError(AppError):
     default_message = "The daily limit is reached. Please come back tomorrow."
 
 
+class DailyCapacityReachedError(AppError):
+    """All visitors together used up today's recommendations or transcriptions (ADR-11.2)."""
+
+    code = "daily_capacity_reached"
+    status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+    default_message = "Today's limit for all visitors is reached. Please come back tomorrow."
+
+
+class BudgetExhaustedError(AppError):
+    """The AI provider refuses requests because the account's spend limit or prepaid balance
+    is used up (ADR-11.2); retrying cannot help until the budget is raised or renewed."""
+
+    code = "budget_exhausted"
+    status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+    default_message = "The budget of this test version is used up."
+
+
 class LLMUnavailableError(AppError):
     code = "llm_unavailable"
     status_code = status.HTTP_503_SERVICE_UNAVAILABLE

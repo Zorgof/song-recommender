@@ -1,6 +1,6 @@
 # ADR-09: Step 9 — Docker
 
-- Status: Accepted
+- Status: Accepted (amended by [ADR-11.2](step-11.2-public-deployment-hardening.md))
 - Date: 2026-10-11
 - Step: 9
 

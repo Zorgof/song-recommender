@@ -1,7 +1,8 @@
 {
   "app": {
     "title": "Song Recommender",
-    "tagline": "Opowiedz, jak się czujesz i jak minął Ci dzień — dostaniesz jedną pasującą piosenkę."
+    "tagline": "Opowiedz, jak się czujesz i jak minął Ci dzień — dostaniesz jedną pasującą piosenkę.",
+    "privacy": "Twoje opisy i nagrania głosowe są wysyłane do OpenAI (USA) w celu przetworzenia; opisy trafiają też do LangSmith (USA) i są przechowywane na tym serwerze. Nie podawaj danych osobowych."
   },
   "nav": {
     "label": "Główna",
@@ -97,6 +98,9 @@
     "retry": "Spróbuj ponownie",
     "validation_error": "Zapytanie nie zostało przyjęte. Sprawdź tekst i spróbuj ponownie.",
     "daily_limit_reached": "Wykorzystano dzisiejszy limit tej wersji testowej. Wróć jutro.",
+    "daily_capacity_reached": "Ta wersja testowa wyczerpała dzisiejszy limit dla wszystkich odwiedzających. Wróć jutro.",
+    "budget_exhausted": "Budżet tej wersji testowej się wyczerpał. Dziękujemy za testy!",
+    "rate_limited": "Za dużo zapytań w krótkim czasie. Odczekaj minutę i spróbuj ponownie.",
     "llm_unavailable": "Model językowy jest teraz niedostępny. Spróbuj ponownie za chwilę.",
     "llm_invalid_output": "Model językowy zwrócił nieprzydatną odpowiedź. Spróbuj ponownie.",
     "catalog_unavailable": "Spotify jest teraz niedostępne, więc nie udało się zweryfikować piosenki. Spróbuj później.",

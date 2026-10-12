@@ -180,6 +180,22 @@ cookies start a new visitor with an empty history and fresh limits, so the limit
 casual overuse; the provider's spend limit stays the hard ceiling. See
 [ADR-11.1](adr/step-11.1-visitors-and-daily-limits.md).
 
+### Public deployment safeguards
+
+Layers in front of the shared API budget, outermost first ([ADR-11.2](adr/step-11.2-public-deployment-hardening.md)):
+
+1. **Cloudflare Tunnel** (`docker-compose.public.yml`): the only way in from the internet; the
+   app's port is bound to `127.0.0.1`.
+2. **nginx rate limits per client IP**, read from `CF-Connecting-IP` when the request comes from
+   a private address (the tunnel container): starting a recommendation or a transcription 6 per
+   minute (burst 6), all of `/api` 5 per second (burst 30). Over it: `429 rate_limited`.
+3. **Per-visitor daily limits** (`DAILY_RECOMMENDATION_LIMIT`, `DAILY_TRANSCRIPTION_LIMIT`).
+4. **Daily limits of all visitors together** (`DAILY_TOTAL_RECOMMENDATION_LIMIT`,
+   `DAILY_TOTAL_TRANSCRIPTION_LIMIT`): `503 daily_capacity_reached`.
+5. **The provider's hard spend limit.** When OpenAI refuses calls because the project or
+   organization limit or the prepaid balance is used up, the API answers
+   `503 budget_exhausted` instead of a generic `llm_unavailable` / `stt_unavailable`.
+
 ## REST API
 
 | Method and path | Body / params | Response |
@@ -192,7 +208,8 @@ casual overuse; the provider's spend limit stays the hard ceiling. See
 | `POST /api/recommendations/{id}/feedback` | `{score: "up" \| "down", comment?}` | `204` |
 | `GET /api/recommendations` | `?limit=20&offset=0` | the visitor's completed recommendations, newest first, with feedback and trace link |
 
-The OpenAPI schema and Swagger UI are at `/api/docs`. Errors have one shape,
+The OpenAPI schema and Swagger UI are at `/api/docs` when `APP_ENV=development`; in production
+(Docker) both `/api/docs` and `/api/openapi.json` are off. Errors have one shape,
 `{"error": {"code", "message"}}`:
 
 | Code | HTTP | Meaning |
@@ -200,6 +217,9 @@ The OpenAPI schema and Swagger UI are at `/api/docs`. Errors have one shape,
 | `validation_error` | 422 | invalid request (e.g. text under 3 or over 2000 characters) |
 | `not_found` | 404 | unknown recommendation id, or one started by another visitor |
 | `daily_limit_reached` | 429 | the visitor used up today's recommendations or transcriptions |
+| `daily_capacity_reached` | 503 | all visitors together used up today's recommendations or transcriptions |
+| `budget_exhausted` | 503 | the provider's spend limit or prepaid balance is used up (OpenAI `*_spend_limit_exceeded`, `credit_balance_exhausted`, `insufficient_quota`) |
+| `rate_limited` | 429 | produced by nginx: too many requests from one IP in a short time |
 | `conflict` | 409 | e.g. answering a question that is not waiting for an answer |
 | `llm_unavailable` | 503 | the model provider failed (and the fallback, if any) |
 | `llm_invalid_output` | 502 | the heavy model returned output that does not match the schema |

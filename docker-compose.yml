@@ -37,7 +37,10 @@ services:
   frontend:
     build: ./frontend
     ports:
-      - "${APP_PORT:-8080}:80"
+      # Only this machine can open the app directly (ADR-11.2). Visitors from outside come in
+      # through the Cloudflare Tunnel (docker-compose.public.yml), never through an open port:
+      # Docker's port publishing would bypass the host firewall.
+      - "127.0.0.1:${APP_PORT:-8080}:80"
     depends_on:
       backend:
         condition: service_healthy

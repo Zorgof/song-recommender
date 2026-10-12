@@ -77,7 +77,10 @@ The first build takes a few minutes. Open **http://localhost:8080**.
 - History is stored in `./data` and survives restarts and rebuilds.
 - `docker compose logs -f backend` shows the logs, and `docker compose down` stops the app.
   After pulling new code, run `docker compose up --build -d` again.
-- Port 8080 taken? Set `APP_PORT=8081` in `.env`.
+- Port 8080 taken? Set `APP_PORT=8081` in `.env`. The port is bound to `127.0.0.1`, so only this
+  machine can open it.
+- To share the app with testers over HTTPS (Cloudflare Tunnel, limits, cost controls), see
+  [docs/deployment.md](docs/deployment.md).
 
 If something does not work, see [docs/troubleshooting.md](docs/troubleshooting.md).
 
@@ -115,6 +118,7 @@ end to end; the Anthropic and Gemini setups are tested offline. Every variable i
 | [Architecture](docs/architecture.md) | services, agent graph, routing, escalation, language handling, data, API |
 | [Configuration](docs/configuration.md) | every environment variable, provider examples, getting the credentials |
 | [Observability and tuning](docs/observability-and-tuning.md) | reading a trace, feedback, running evaluations, changing prompts |
+| [Deployment](docs/deployment.md) | sharing the app publicly: Cloudflare Tunnel, OpenAI budget, limits, kill switch |
 | [Troubleshooting](docs/troubleshooting.md) | microphone, YouTube quota, missing keys, Docker, slow requests |
 | [Development](docs/development.md) | toolchain, running without Docker, hot reload in Docker, code quality |
 | [Requirements](docs/requirements.md), [Implementation plan](docs/implementation-plan.md) | what the app must do, and the original design |
@@ -174,4 +178,5 @@ docker-compose.dev.yml  development override with hot reload
 
 Your descriptions and transcripts are sent to the configured LLM provider and, if tracing is
 on, to LangSmith (US region). Voice recordings go to OpenAI for transcription only; they are
-not stored and not sent to LangSmith. History stays in `./data` on your machine.
+not stored and not sent to LangSmith. History stays in `./data` on your machine. The home page
+says this to every visitor in one sentence (NFR-5).

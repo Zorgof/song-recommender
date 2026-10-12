@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 
-import { errorCode } from '../lib/errors'
+import { canRetry, errorCode } from '../lib/errors'
 
 interface Props {
   error: unknown
@@ -16,7 +16,7 @@ export function ErrorMessage({ error, onRetry }: Props) {
     >
       <p className="font-semibold">{t('errors.title')}</p>
       <p>{t(`errors.${errorCode(error)}`)}</p>
-      {onRetry && (
+      {onRetry && canRetry(error) && (
         <button type="button" onClick={onRetry} className="btn-secondary mt-3">
           {t('errors.retry')}
         </button>

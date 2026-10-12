@@ -11,7 +11,8 @@ import openai
 from openai.types.audio import Transcription, TranscriptionCreateResponse
 
 from app.config import Settings
-from app.errors import InvalidAudioError, STTUnavailableError
+from app.errors import BudgetExhaustedError, InvalidAudioError, STTUnavailableError
+from app.llm.budget import is_budget_exhausted
 from app.stt.base import AUDIO_FORMATS, Transcript
 
 logger = logging.getLogger(__name__)
@@ -48,6 +49,8 @@ class OpenAISTT:
             raise STTUnavailableError() from exc
         except openai.APIError as exc:
             logger.error("OpenAI transcription failed", extra=_error_extra(exc))
+            if is_budget_exhausted(exc):
+                raise BudgetExhaustedError() from exc
             raise STTUnavailableError() from exc
         return Transcript(
             text=result.text.strip(), language=_language(result), duration_s=_duration(result)

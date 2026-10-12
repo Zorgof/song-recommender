@@ -59,6 +59,10 @@ def get_daily_limits(request: Request) -> DailyLimits:
             UsageAction.RECOMMENDATION: settings.daily_recommendation_limit,
             UsageAction.TRANSCRIPTION: settings.daily_transcription_limit,
         },
+        {
+            UsageAction.RECOMMENDATION: settings.daily_total_recommendation_limit,
+            UsageAction.TRANSCRIPTION: settings.daily_total_transcription_limit,
+        },
     )
 
 

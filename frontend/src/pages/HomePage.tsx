@@ -161,7 +161,11 @@ export function HomePage() {
 
   return (
     <div className="space-y-6">
-      <p className="text-slate-600 dark:text-slate-300">{t('app.tagline')}</p>
+      <div className="space-y-2">
+        <p className="text-slate-600 dark:text-slate-300">{t('app.tagline')}</p>
+        {/* NFR-5: what leaves the browser, said before anything is typed (ADR-11.2). */}
+        <p className="text-sm text-slate-500 dark:text-slate-400">{t('app.privacy')}</p>
+      </div>
 
       {nothingHeard && (
         <p

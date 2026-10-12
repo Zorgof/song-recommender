@@ -43,6 +43,12 @@ distribution; then `docker info` must print the engine version.
 Set another port in `.env`, e.g. `APP_PORT=8081`, and run `docker compose up -d`. The app is then
 at `http://localhost:8081`.
 
+### The app does not open from another device at `http://<ip>:8080`
+
+The port is bound to `127.0.0.1` on purpose (ADR-11.2): only the host can open it directly, and
+the public address comes from the Cloudflare Tunnel. Start the stack with the tunnel and open the
+`https://…trycloudflare.com` address it prints; see [Deployment](deployment.md).
+
 ### LangSmith returns 403
 
 An organization-scoped service key (`lsv2_sk_…`) needs the workspace: set
@@ -105,6 +111,28 @@ Each browser may start `DAILY_RECOMMENDATION_LIMIT` (default 10) recommendations
 `DAILY_TRANSCRIPTION_LIMIT` (default 20) recordings per day; the counters reset at midnight
 UTC. For local use, set both to `0` in `.env` to turn the limits off, then restart the backend.
 
+### "This test version has reached today's limit for all visitors" (`daily_capacity_reached`)
+
+All visitors together started `DAILY_TOTAL_RECOMMENDATION_LIMIT` (default 100) recommendations or
+`DAILY_TOTAL_TRANSCRIPTION_LIMIT` (default 200) transcriptions today (UTC). The backend logs
+`Daily limit of all visitors reached`. Raise the limit in `.env` if the budget allows, or set it
+to `0` for local use, then restart the backend.
+
+### "The budget of this test version is used up" (`budget_exhausted`)
+
+OpenAI refused the call because the project's or organization's hard spend limit, or the prepaid
+balance, is used up; the backend logs `LLM budget is used up` or `OpenAI transcription failed`
+with the code. Nothing in the app can fix it: raise the limit or top up on platform.openai.com,
+or wait for the next monthly cycle. Requests work again without a restart.
+
+### "Too many requests in a short time" (`rate_limited`)
+
+nginx limits each client IP to 6 new recommendations or recordings per minute (after a burst of 6)
+and 5 API requests per second. Wait a minute. If every visitor hits it at once behind the
+tunnel, nginx is not seeing the real client IP: the tunnel must reach nginx from a private
+address (the `tunnel` service in `docker-compose.public.yml` does), so `CF-Connecting-IP` is
+trusted.
+
 ### The history is empty, or older recommendations are missing
 
 The history shows only the recommendations made in the current browser (it is identified by
@@ -149,8 +177,12 @@ Options, not part of the tested setup:
   Then open `https://192.168.1.20:8443` on the device and trust Caddy's local certificate (or
   accept the browser's warning). Use your host's LAN address, and allow the port in the
   firewall.
-- **For a quick test in Chrome:** open `chrome://flags/#unsafely-treat-insecure-origin-as-secure`
-  on the device, add `http://192.168.1.20:8080`, and restart Chrome.
+- **Cloudflare Tunnel** (simplest): start the stack with `docker-compose.public.yml` and open
+  the `https://…trycloudflare.com` address on the device; see [Deployment](deployment.md). It
+  is public, though, not limited to your LAN.
+
+The app port itself is bound to `127.0.0.1` (ADR-11.2), so `http://<ip>:8080` does not open from
+other devices at all.
 
 ### "Microphone access is blocked"
 

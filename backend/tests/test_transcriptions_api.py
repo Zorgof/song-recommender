@@ -170,3 +170,19 @@ def test_daily_limit_stops_transcriptions(client: TestClient, app: FastAPI, stt:
     assert first.status_code == 200, first.text
     assert (second.status_code, second.json()["error"]["code"]) == (429, "daily_limit_reached")
     assert len(stt.calls) == 1
+
+
+def test_daily_total_limit_stops_transcriptions_of_all_visitors(
+    client: TestClient, app: FastAPI, stt: FakeSTT
+) -> None:
+    app.state.settings = app.state.settings.model_copy(
+        update={"daily_total_transcription_limit": 1}
+    )
+    first = upload(client)
+    client.cookies.clear()  # another browser
+
+    second = upload(client)
+
+    assert first.status_code == 200, first.text
+    assert (second.status_code, second.json()["error"]["code"]) == (503, "daily_capacity_reached")
+    assert len(stt.calls) == 1

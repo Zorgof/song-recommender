@@ -583,6 +583,51 @@ def test_zero_means_no_daily_limit(api: tuple[TestClient, UseHarness], app: Fast
     assert statuses == [200] * len(SONGS)
 
 
+# --- Daily limit of all visitors together (ADR-11.2) ---
+
+
+def limit_all_recommendations(app: FastAPI, limit: int) -> None:
+    app.state.settings = app.state.settings.model_copy(
+        update={"daily_total_recommendation_limit": limit}
+    )
+
+
+def test_daily_total_limit_stops_every_visitor(
+    api: tuple[TestClient, UseHarness], app: FastAPI
+) -> None:
+    client, use = api
+    harness = use()
+    limit_all_recommendations(app, 2)
+    recommend(client)
+    as_new_visitor(client)
+    recommend(client)
+    calls = len(harness.light.calls)
+    as_new_visitor(client)
+
+    response = recommend_raw(client)
+
+    assert response.status_code == 503
+    assert response.json()["error"]["code"] == "daily_capacity_reached"
+    assert len(harness.light.calls) == calls  # no LLM call
+
+
+def test_visitor_over_own_limit_does_not_use_up_the_total(
+    api: tuple[TestClient, UseHarness], app: FastAPI
+) -> None:
+    client, use = api
+    use()
+    limit_recommendations(app, 1)
+    limit_all_recommendations(app, 2)
+    recommend(client)
+    rejected = [recommend_raw(client).status_code for _ in range(3)]
+    as_new_visitor(client)
+
+    other_visitor = recommend_raw(client)
+
+    assert rejected == [429] * 3
+    assert other_visitor.status_code == 200, other_visitor.text
+
+
 def recommend_raw(client: TestClient) -> Any:
     return client.post(
         "/api/recommendations", json={"text": SIMPLE_EN, "input_mode": "text", "locale": "en"}

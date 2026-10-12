@@ -128,6 +128,42 @@ describe('HomePage', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       "You have used today's limit for this test version.",
     )
+    // Trying again the same day cannot help.
+    expect(screen.queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument()
+  })
+
+  it.each([
+    ['budget_exhausted', 503, 'The budget of this test version is used up.'],
+    ['daily_capacity_reached', 503, "This test version has reached today's limit"],
+  ])('explains %s without offering a retry', async (code, status, message) => {
+    mockFetch(() => apiError(code, status))
+    const { user } = renderApp()
+
+    await describeDay(user)
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(message)
+    expect(screen.queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument()
+  })
+
+  it('explains the proxy rate limit and offers a retry', async () => {
+    mockFetch(() => apiError('rate_limited', 429))
+    const { user } = renderApp()
+
+    await describeDay(user)
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Too many requests in a short time.')
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument()
+  })
+
+  it('tells visitors where their input goes', async () => {
+    mockFetch(() => json(completed()))
+    renderApp()
+
+    expect(
+      await screen.findByText(
+        /recordings are sent to OpenAI \(USA\).*LangSmith \(USA\).*personal data/,
+      ),
+    ).toBeInTheDocument()
   })
 
   it('keeps the question after a failed answer, but not after a conflict', async () => {

@@ -113,6 +113,13 @@ def test_openapi_docs_are_served_under_api(client: TestClient) -> None:
     assert client.get("/api/docs").status_code == 200
 
 
+def test_openapi_docs_are_hidden_in_production(tmp_path: Path) -> None:
+    with TestClient(create_app(make_app_settings(tmp_path, app_env="production"))) as client:
+        assert client.get("/api/openapi.json").status_code == 404
+        assert client.get("/api/docs").status_code == 404
+        assert client.get("/api/health").status_code == 200
+
+
 def test_cors_only_in_development(tmp_path: Path) -> None:
     preflight = {
         "Origin": "http://localhost:5173",

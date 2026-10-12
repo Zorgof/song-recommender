@@ -1,6 +1,6 @@
 # ADR-11.1: Step 11 — Anonymous visitors, per-visitor history and daily limits
 
-- Status: Accepted
+- Status: Accepted (amended by [ADR-11.2](step-11.2-public-deployment-hardening.md))
 - Date: 2026-10-11
 - Step: 11 (additional ADR #1)
 - Amends: [ADR-05](step-05-recommendation-api.md) (the history and feedback endpoints are now

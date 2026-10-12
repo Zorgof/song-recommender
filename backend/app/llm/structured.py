@@ -2,7 +2,8 @@
 
 Two kinds of failure are handled differently:
 - the provider fails (network, rate limit, 5xx after the SDK's own retries): the tier's fallback
-  model is tried (see ModelRegistry.structured); if that fails too, LLMUnavailableError;
+  model is tried (see ModelRegistry.structured); if that fails too, LLMUnavailableError, or
+  BudgetExhaustedError when the provider says the spend limit or balance is used up;
 - the model answers but the output does not match the schema: on the light tier the call is
   repeated once on the heavy tier; on the heavy tier, LLMInvalidOutputError.
 """
@@ -16,7 +17,8 @@ from langchain_core.messages import AIMessage
 from langchain_core.runnables import RunnableConfig
 from pydantic import BaseModel
 
-from app.errors import LLMInvalidOutputError, LLMUnavailableError
+from app.errors import BudgetExhaustedError, LLMInvalidOutputError, LLMUnavailableError
+from app.llm.budget import is_budget_exhausted
 from app.llm.models import ModelRegistry, Tier
 
 logger = logging.getLogger(__name__)
@@ -52,6 +54,9 @@ async def structured_call[T: BaseModel](
         try:
             output: dict[str, Any] = await runnable.ainvoke(messages, config=attempt_config)
         except Exception as exc:
+            if is_budget_exhausted(exc):
+                logger.error("LLM budget is used up", extra={"tier": attempt_tier})
+                raise BudgetExhaustedError() from exc
             logger.warning(
                 "LLM call failed",
                 extra={"tier": attempt_tier, "error_type": type(exc).__name__},

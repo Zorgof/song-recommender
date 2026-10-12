@@ -8,7 +8,7 @@ import httpx2
 import openai
 import pytest
 
-from app.errors import InvalidAudioError, STTUnavailableError
+from app.errors import BudgetExhaustedError, InvalidAudioError, STTUnavailableError
 from app.stt.base import Transcript
 from app.stt.factory import build_stt_provider
 from app.stt.openai_stt import OpenAISTT
@@ -114,6 +114,21 @@ async def test_provider_errors_are_stt_unavailable(status: int, body: dict[str, 
     stt = make_stt(reply(status, body))
 
     with pytest.raises(STTUnavailableError):
+        await stt.transcribe(AUDIO, "audio/webm")
+
+
+@pytest.mark.parametrize(
+    "code",
+    [
+        "project_spend_limit_exceeded",
+        "organization_spend_limit_exceeded",
+        "credit_balance_exhausted",
+    ],
+)
+async def test_spend_limit_is_budget_exhausted(code: str) -> None:
+    stt = make_stt(reply(429, api_error(None, code)))
+
+    with pytest.raises(BudgetExhaustedError):
         await stt.transcribe(AUDIO, "audio/webm")
 
 

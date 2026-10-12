@@ -88,7 +88,7 @@ Rules:
 
 | ADR | Title | Status |
 |-----|-------|--------|
-| [ADR-09](step-09-docker.md) | Docker images, nginx, Compose (prod + dev), data volume ownership | Accepted |
+| [ADR-09](step-09-docker.md) | Docker images, nginx, Compose (prod + dev), data volume ownership | Accepted (amended by ADR-11.2) |
 
 ### Step 10 — Evals and tuning groundwork
 
@@ -101,7 +101,8 @@ Rules:
 | ADR | Title | Status |
 |-----|-------|--------|
 | [ADR-11](step-11-documentation.md) | README, architecture, configuration, tuning and troubleshooting docs, screenshots | Accepted |
-| [ADR-11.1](step-11.1-visitors-and-daily-limits.md) | Anonymous visitors, per-visitor history and daily limits | Accepted |
+| [ADR-11.1](step-11.1-visitors-and-daily-limits.md) | Anonymous visitors, per-visitor history and daily limits | Accepted (amended by ADR-11.2) |
+| [ADR-11.2](step-11.2-public-deployment-hardening.md) | Public deployment hardening and Cloudflare Tunnel | Accepted |
 
 ## Templates
 

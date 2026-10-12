@@ -2,13 +2,15 @@ from pathlib import Path
 from typing import Any, Literal
 from uuid import UUID
 
+import httpx2
+import openai
 import pytest
 from langchain_core.callbacks import AsyncCallbackHandler
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import BaseMessage
 from pydantic import BaseModel, Field
 
-from app.errors import LLMInvalidOutputError, LLMUnavailableError
+from app.errors import BudgetExhaustedError, LLMInvalidOutputError, LLMUnavailableError
 from app.llm.models import ModelOptions, ModelRegistry, ModelSpec
 from app.llm.structured import ESCALATION_INVALID_OUTPUT, structured_call
 from tests.conftest import make_app_settings
@@ -149,6 +151,51 @@ async def test_failing_primary_and_fallback_is_unavailable(tmp_path: Path) -> No
         {"light": light, "backup": backup, "heavy": heavy},
         llm_light_fallback="openai:backup",
     )
+
+    with pytest.raises(LLMUnavailableError):
+        await structured_call(registry, "light", Mood, PROMPT)
+
+
+def spend_limit_error(code: str = "project_spend_limit_exceeded") -> openai.RateLimitError:
+    request = httpx2.Request("POST", "https://api.openai.test/v1/chat/completions")
+    body = {"message": "Spend limit reached.", "type": "insufficient_quota", "code": code}
+    return openai.RateLimitError(
+        "Spend limit reached.", response=httpx2.Response(429, request=request), body=body
+    )
+
+
+async def test_spend_limit_is_budget_exhausted(tmp_path: Path) -> None:
+    light = ScriptedChatModel(model_name="light-v1", script=[spend_limit_error()])
+    heavy = ScriptedChatModel(model_name="heavy-v1", script=[VALID])
+    registry = make_registry(tmp_path, {"light": light, "heavy": heavy})
+
+    with pytest.raises(BudgetExhaustedError):
+        await structured_call(registry, "light", Mood, PROMPT)
+
+    assert heavy.call_count == 0
+
+
+async def test_working_fallback_wins_over_spend_limit(tmp_path: Path) -> None:
+    light = ScriptedChatModel(model_name="light-v1", script=[spend_limit_error()])
+    backup = ScriptedChatModel(model_name="backup-v1", script=[VALID])
+    heavy = ScriptedChatModel(model_name="heavy-v1", script=[VALID])
+    registry = make_registry(
+        tmp_path,
+        {"light": light, "backup": backup, "heavy": heavy},
+        llm_light_fallback="openai:backup",
+    )
+
+    result = await structured_call(registry, "light", Mood, PROMPT)
+
+    assert result.model == "backup-v1"
+
+
+async def test_ordinary_rate_limit_is_unavailable(tmp_path: Path) -> None:
+    light = ScriptedChatModel(
+        model_name="light-v1", script=[spend_limit_error("rate_limit_exceeded")]
+    )
+    heavy = ScriptedChatModel(model_name="heavy-v1", script=[VALID])
+    registry = make_registry(tmp_path, {"light": light, "heavy": heavy})
 
     with pytest.raises(LLMUnavailableError):
         await structured_call(registry, "light", Mood, PROMPT)

@@ -20,14 +20,17 @@ cp .env.example .env
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `APP_ENV` | `development` | `development`: readable console logs, CORS for `CORS_ORIGINS`. `production`: JSON logs, no CORS. **Docker Compose sets `production`** (the dev override sets `development`) |
+| `APP_ENV` | `development` | `development`: readable console logs, CORS for `CORS_ORIGINS`, API docs at `/api/docs`. `production`: JSON logs, no CORS, no `/api/docs` and `/api/openapi.json`. **Docker Compose sets `production`** (the dev override sets `development`) |
 | `LOG_LEVEL` | `INFO` | `DEBUG`, `INFO`, `WARNING` or `ERROR` |
 | `DATA_DIR` | `data` | Directory of `app.db` and `checkpoints.db`. Relative paths are relative to the working directory: `backend/data` when you run the backend from `backend/`. **Docker Compose sets `/data`**, mounted from `./data` |
 | `HISTORY_EXCLUDE_LAST_N` | `50` | Songs from this many of the visitor's recent recommendations are not recommended to that visitor again (FR-16); `0` turns it off |
 | `DAILY_RECOMMENDATION_LIMIT` | `10` | New recommendations one visitor (browser) may start per day, reset at midnight UTC; answering a clarifying question does not count. Over the limit: `429 daily_limit_reached`. `0` = no limit |
 | `DAILY_TRANSCRIPTION_LIMIT` | `20` | Recordings one visitor may transcribe per day; higher than the recommendation limit so a visitor can record again. `0` = no limit |
+| `DAILY_TOTAL_RECOMMENDATION_LIMIT` | `100` | New recommendations all visitors together may start per UTC day, a ceiling that new browsers and private windows cannot reset. Over it: `503 daily_capacity_reached`. Size it to the budget (see [Deployment](deployment.md#sizing-the-limits-to-the-budget)). `0` = no limit |
+| `DAILY_TOTAL_TRANSCRIPTION_LIMIT` | `200` | The same for transcriptions. `0` = no limit |
 | `CORS_ORIGINS` | `["http://localhost:5173"]` | JSON list of origins allowed to call the API directly; `development` only. Not needed with the Vite proxy |
-| `APP_PORT` | `8080` | Docker Compose only: host port of the app (`http://localhost:<APP_PORT>`) |
+| `APP_PORT` | `8080` | Docker Compose only: host port of the app (`http://localhost:<APP_PORT>`). Bound to `127.0.0.1`, so other devices cannot open it directly; use the tunnel ([Deployment](deployment.md)) |
+| `TUNNEL_TOKEN` | — | `docker-compose.public.yml` with a named Cloudflare Tunnel only: the tunnel's token from the Cloudflare dashboard |
 
 ## Language models
 

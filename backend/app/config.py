@@ -41,6 +41,10 @@ class Settings(BaseSettings):
     daily_recommendation_limit: int = Field(default=10, ge=0)
     # Higher than the recommendation limit, so a visitor can record again before submitting.
     daily_transcription_limit: int = Field(default=20, ge=0)
+    # The same, summed over all visitors: a ceiling for a day even when visitors keep coming
+    # back with new browsers or private windows (ADR-11.2).
+    daily_total_recommendation_limit: int = Field(default=100, ge=0)
+    daily_total_transcription_limit: int = Field(default=200, ge=0)
 
     # --- LLM providers ---
     openai_api_key: SecretStr | None = None

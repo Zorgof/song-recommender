@@ -125,13 +125,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or get_settings()
     configure_logging(settings)
 
+    # The schema and Swagger UI only help development; a public deployment does not advertise
+    # its API (ADR-11.2).
+    docs = settings.is_development
     app = FastAPI(
         title="Song Recommender API",
         version=__version__,
         lifespan=lifespan,
-        docs_url=f"{API_PREFIX}/docs",
+        docs_url=f"{API_PREFIX}/docs" if docs else None,
         redoc_url=None,
-        openapi_url=f"{API_PREFIX}/openapi.json",
+        openapi_url=f"{API_PREFIX}/openapi.json" if docs else None,
     )
     app.state.settings = settings
     # Validates the LLM configuration; a bad .env stops the app here with a clear message.
