@@ -1,6 +1,6 @@
 # ADR-11.3: Step 11 — Always-dark theme and the public release script
 
-- Status: Accepted
+- Status: Accepted (amended by [ADR-11.4](step-11.4-usage-stats-command.md))
 - Date: 2026-10-12
 - Step: 11 (additional ADR #3)
 - Amends: [ADR-07](step-07-frontend-text-flow-and-i18n.md) (the theme no longer follows

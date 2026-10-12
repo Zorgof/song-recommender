@@ -103,7 +103,8 @@ Rules:
 | [ADR-11](step-11-documentation.md) | README, architecture, configuration, tuning and troubleshooting docs, screenshots | Accepted |
 | [ADR-11.1](step-11.1-visitors-and-daily-limits.md) | Anonymous visitors, per-visitor history and daily limits | Accepted (amended by ADR-11.2) |
 | [ADR-11.2](step-11.2-public-deployment-hardening.md) | Public deployment hardening and Cloudflare Tunnel | Accepted (amended by ADR-11.3) |
-| [ADR-11.3](step-11.3-dark-theme-and-release-script.md) | Always-dark theme and the public release script | Accepted |
+| [ADR-11.3](step-11.3-dark-theme-and-release-script.md) | Always-dark theme and the public release script | Accepted (amended by ADR-11.4) |
+| [ADR-11.4](step-11.4-usage-stats-command.md) | Usage statistics command (`scripts/public.sh stats`) | Accepted |
 
 ## Templates
 

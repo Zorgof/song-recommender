@@ -39,6 +39,7 @@ scripts/public.sh start   # build, start, wait for the tunnel, print the public 
 scripts/public.sh url     # print the address again
 scripts/public.sh stop    # kill switch: off the internet, still running locally
 scripts/public.sh down    # stop everything; ./data is kept
+scripts/public.sh stats   # usage of the last 7 days, today's totals against the limits
 ```
 
 `start` prints `https://<words>.trycloudflare.com` once the address answers; share it. No
@@ -100,6 +101,12 @@ Fastest first:
 - Transcription costs spike: `STT_PROVIDER=none` and `up -d` removes only the microphone.
 
 Where to look:
+
+- `scripts/public.sh stats`: recommendations per day (completed, failed, waiting for an answer,
+  voice), transcriptions, distinct visitors, today's totals against
+  `DAILY_TOTAL_*_LIMIT`, error codes and ratings. Read-only, from `data/app.db`.
+- `docker compose logs -f frontend | grep -v Wget`: every request live, with the visitor's IP
+  (`Wget` lines are the healthcheck).
 
 - OpenAI Usage (by project and key): spend per day.
 - LangSmith project `song-recommender-public`: runs, latency, errors, testers' ratings.
